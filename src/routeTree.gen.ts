@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AccessControlRouteImport } from './routes/access-control'
 import { Route as EventsRouteImport } from './routes/events'
+import { Route as PosRouteImport } from './routes/pos'
 import { Route as SalesRouteImport } from './routes/sales'
 import { Route as TicketsRouteImport } from './routes/tickets'
 
@@ -30,6 +31,11 @@ const EventsRoute = EventsRouteImport.update({
   path: '/events',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PosRoute = PosRouteImport.update({
+  id: '/pos',
+  path: '/pos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SalesRoute = SalesRouteImport.update({
   id: '/sales',
   path: '/sales',
@@ -45,6 +51,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/access-control': typeof AccessControlRoute
   '/events': typeof EventsRoute
+  '/pos': typeof PosRoute
   '/sales': typeof SalesRoute
   '/tickets': typeof TicketsRoute
 }
@@ -52,6 +59,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/access-control': typeof AccessControlRoute
   '/events': typeof EventsRoute
+  '/pos': typeof PosRoute
   '/sales': typeof SalesRoute
   '/tickets': typeof TicketsRoute
 }
@@ -60,21 +68,31 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/access-control': typeof AccessControlRoute
   '/events': typeof EventsRoute
+  '/pos': typeof PosRoute
   '/sales': typeof SalesRoute
   '/tickets': typeof TicketsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/access-control' | '/events' | '/sales' | '/tickets'
+  fullPaths:
+    '/' | '/access-control' | '/events' | '/pos' | '/sales' | '/tickets'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/access-control' | '/events' | '/sales' | '/tickets'
-  id: '__root__' | '/' | '/access-control' | '/events' | '/sales' | '/tickets'
+  to: '/' | '/access-control' | '/events' | '/pos' | '/sales' | '/tickets'
+  id:
+    | '__root__'
+    | '/'
+    | '/access-control'
+    | '/events'
+    | '/pos'
+    | '/sales'
+    | '/tickets'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AccessControlRoute: typeof AccessControlRoute
   EventsRoute: typeof EventsRoute
+  PosRoute: typeof PosRoute
   SalesRoute: typeof SalesRoute
   TicketsRoute: typeof TicketsRoute
 }
@@ -102,6 +120,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EventsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pos': {
+      id: '/pos'
+      path: '/pos'
+      fullPath: '/pos'
+      preLoaderRoute: typeof PosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sales': {
       id: '/sales'
       path: '/sales'
@@ -123,6 +148,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AccessControlRoute: AccessControlRoute,
   EventsRoute: EventsRoute,
+  PosRoute: PosRoute,
   SalesRoute: SalesRoute,
   TicketsRoute: TicketsRoute,
 }
