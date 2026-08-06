@@ -10,33 +10,232 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AccessControlRouteImport } from './routes/access-control'
+import { Route as AnalyticsRouteImport } from './routes/analytics'
+import { Route as CustomersRouteImport } from './routes/customers'
+import { Route as EmployeesRouteImport } from './routes/employees'
+import { Route as EventsRouteImport } from './routes/events'
+import { Route as InventoryRouteImport } from './routes/inventory'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as PosRouteImport } from './routes/pos'
+import { Route as ProductsRouteImport } from './routes/products'
+import { Route as PromotersRouteImport } from './routes/promoters'
+import { Route as ReportsRouteImport } from './routes/reports'
+import { Route as SalesRouteImport } from './routes/sales'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as TicketsRouteImport } from './routes/tickets'
+import { Route as VipTablesRouteImport } from './routes/vip-tables'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AccessControlRoute = AccessControlRouteImport.update({
+  id: '/access-control',
+  path: '/access-control',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnalyticsRoute = AnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CustomersRoute = CustomersRouteImport.update({
+  id: '/customers',
+  path: '/customers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EmployeesRoute = EmployeesRouteImport.update({
+  id: '/employees',
+  path: '/employees',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EventsRoute = EventsRouteImport.update({
+  id: '/events',
+  path: '/events',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InventoryRoute = InventoryRouteImport.update({
+  id: '/inventory',
+  path: '/inventory',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PosRoute = PosRouteImport.update({
+  id: '/pos',
+  path: '/pos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProductsRoute = ProductsRouteImport.update({
+  id: '/products',
+  path: '/products',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PromotersRoute = PromotersRouteImport.update({
+  id: '/promoters',
+  path: '/promoters',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportsRoute = ReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SalesRoute = SalesRouteImport.update({
+  id: '/sales',
+  path: '/sales',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TicketsRoute = TicketsRouteImport.update({
+  id: '/tickets',
+  path: '/tickets',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VipTablesRoute = VipTablesRouteImport.update({
+  id: '/vip-tables',
+  path: '/vip-tables',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/access-control': typeof AccessControlRoute
+  '/analytics': typeof AnalyticsRoute
+  '/customers': typeof CustomersRoute
+  '/employees': typeof EmployeesRoute
+  '/events': typeof EventsRoute
+  '/inventory': typeof InventoryRoute
+  '/login': typeof LoginRoute
+  '/pos': typeof PosRoute
+  '/products': typeof ProductsRoute
+  '/promoters': typeof PromotersRoute
+  '/reports': typeof ReportsRoute
+  '/sales': typeof SalesRoute
+  '/settings': typeof SettingsRoute
+  '/tickets': typeof TicketsRoute
+  '/vip-tables': typeof VipTablesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/access-control': typeof AccessControlRoute
+  '/analytics': typeof AnalyticsRoute
+  '/customers': typeof CustomersRoute
+  '/employees': typeof EmployeesRoute
+  '/events': typeof EventsRoute
+  '/inventory': typeof InventoryRoute
+  '/login': typeof LoginRoute
+  '/pos': typeof PosRoute
+  '/products': typeof ProductsRoute
+  '/promoters': typeof PromotersRoute
+  '/reports': typeof ReportsRoute
+  '/sales': typeof SalesRoute
+  '/settings': typeof SettingsRoute
+  '/tickets': typeof TicketsRoute
+  '/vip-tables': typeof VipTablesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/access-control': typeof AccessControlRoute
+  '/analytics': typeof AnalyticsRoute
+  '/customers': typeof CustomersRoute
+  '/employees': typeof EmployeesRoute
+  '/events': typeof EventsRoute
+  '/inventory': typeof InventoryRoute
+  '/login': typeof LoginRoute
+  '/pos': typeof PosRoute
+  '/products': typeof ProductsRoute
+  '/promoters': typeof PromotersRoute
+  '/reports': typeof ReportsRoute
+  '/sales': typeof SalesRoute
+  '/settings': typeof SettingsRoute
+  '/tickets': typeof TicketsRoute
+  '/vip-tables': typeof VipTablesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/access-control'
+    | '/analytics'
+    | '/customers'
+    | '/employees'
+    | '/events'
+    | '/inventory'
+    | '/login'
+    | '/pos'
+    | '/products'
+    | '/promoters'
+    | '/reports'
+    | '/sales'
+    | '/settings'
+    | '/tickets'
+    | '/vip-tables'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/access-control'
+    | '/analytics'
+    | '/customers'
+    | '/employees'
+    | '/events'
+    | '/inventory'
+    | '/login'
+    | '/pos'
+    | '/products'
+    | '/promoters'
+    | '/reports'
+    | '/sales'
+    | '/settings'
+    | '/tickets'
+    | '/vip-tables'
+  id:
+    | '__root__'
+    | '/'
+    | '/access-control'
+    | '/analytics'
+    | '/customers'
+    | '/employees'
+    | '/events'
+    | '/inventory'
+    | '/login'
+    | '/pos'
+    | '/products'
+    | '/promoters'
+    | '/reports'
+    | '/sales'
+    | '/settings'
+    | '/tickets'
+    | '/vip-tables'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AccessControlRoute: typeof AccessControlRoute
+  AnalyticsRoute: typeof AnalyticsRoute
+  CustomersRoute: typeof CustomersRoute
+  EmployeesRoute: typeof EmployeesRoute
+  EventsRoute: typeof EventsRoute
+  InventoryRoute: typeof InventoryRoute
+  LoginRoute: typeof LoginRoute
+  PosRoute: typeof PosRoute
+  ProductsRoute: typeof ProductsRoute
+  PromotersRoute: typeof PromotersRoute
+  ReportsRoute: typeof ReportsRoute
+  SalesRoute: typeof SalesRoute
+  SettingsRoute: typeof SettingsRoute
+  TicketsRoute: typeof TicketsRoute
+  VipTablesRoute: typeof VipTablesRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,22 +247,132 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/access-control': {
+      id: '/access-control'
+      path: '/access-control'
+      fullPath: '/access-control'
+      preLoaderRoute: typeof AccessControlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/analytics': {
+      id: '/analytics'
+      path: '/analytics'
+      fullPath: '/analytics'
+      preLoaderRoute: typeof AnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/customers': {
+      id: '/customers'
+      path: '/customers'
+      fullPath: '/customers'
+      preLoaderRoute: typeof CustomersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/employees': {
+      id: '/employees'
+      path: '/employees'
+      fullPath: '/employees'
+      preLoaderRoute: typeof EmployeesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/events': {
+      id: '/events'
+      path: '/events'
+      fullPath: '/events'
+      preLoaderRoute: typeof EventsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inventory': {
+      id: '/inventory'
+      path: '/inventory'
+      fullPath: '/inventory'
+      preLoaderRoute: typeof InventoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pos': {
+      id: '/pos'
+      path: '/pos'
+      fullPath: '/pos'
+      preLoaderRoute: typeof PosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/products': {
+      id: '/products'
+      path: '/products'
+      fullPath: '/products'
+      preLoaderRoute: typeof ProductsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/promoters': {
+      id: '/promoters'
+      path: '/promoters'
+      fullPath: '/promoters'
+      preLoaderRoute: typeof PromotersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reports': {
+      id: '/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof ReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sales': {
+      id: '/sales'
+      path: '/sales'
+      fullPath: '/sales'
+      preLoaderRoute: typeof SalesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tickets': {
+      id: '/tickets'
+      path: '/tickets'
+      fullPath: '/tickets'
+      preLoaderRoute: typeof TicketsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/vip-tables': {
+      id: '/vip-tables'
+      path: '/vip-tables'
+      fullPath: '/vip-tables'
+      preLoaderRoute: typeof VipTablesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AccessControlRoute: AccessControlRoute,
+  AnalyticsRoute: AnalyticsRoute,
+  CustomersRoute: CustomersRoute,
+  EmployeesRoute: EmployeesRoute,
+  EventsRoute: EventsRoute,
+  InventoryRoute: InventoryRoute,
+  LoginRoute: LoginRoute,
+  PosRoute: PosRoute,
+  ProductsRoute: ProductsRoute,
+  PromotersRoute: PromotersRoute,
+  ReportsRoute: ReportsRoute,
+  SalesRoute: SalesRoute,
+  SettingsRoute: SettingsRoute,
+  TicketsRoute: TicketsRoute,
+  VipTablesRoute: VipTablesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
