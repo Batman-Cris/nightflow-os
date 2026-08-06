@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AccessControlRouteImport } from './routes/access-control'
 import { Route as CustomersRouteImport } from './routes/customers'
+import { Route as EmployeesRouteImport } from './routes/employees'
 import { Route as EventsRouteImport } from './routes/events'
 import { Route as InventoryRouteImport } from './routes/inventory'
 import { Route as PosRouteImport } from './routes/pos'
@@ -32,6 +33,11 @@ const AccessControlRoute = AccessControlRouteImport.update({
 const CustomersRoute = CustomersRouteImport.update({
   id: '/customers',
   path: '/customers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EmployeesRoute = EmployeesRouteImport.update({
+  id: '/employees',
+  path: '/employees',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EventsRoute = EventsRouteImport.update({
@@ -69,6 +75,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/access-control': typeof AccessControlRoute
   '/customers': typeof CustomersRoute
+  '/employees': typeof EmployeesRoute
   '/events': typeof EventsRoute
   '/inventory': typeof InventoryRoute
   '/pos': typeof PosRoute
@@ -80,6 +87,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/access-control': typeof AccessControlRoute
   '/customers': typeof CustomersRoute
+  '/employees': typeof EmployeesRoute
   '/events': typeof EventsRoute
   '/inventory': typeof InventoryRoute
   '/pos': typeof PosRoute
@@ -92,6 +100,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/access-control': typeof AccessControlRoute
   '/customers': typeof CustomersRoute
+  '/employees': typeof EmployeesRoute
   '/events': typeof EventsRoute
   '/inventory': typeof InventoryRoute
   '/pos': typeof PosRoute
@@ -105,6 +114,7 @@ export interface FileRouteTypes {
     | '/'
     | '/access-control'
     | '/customers'
+    | '/employees'
     | '/events'
     | '/inventory'
     | '/pos'
@@ -116,6 +126,7 @@ export interface FileRouteTypes {
     | '/'
     | '/access-control'
     | '/customers'
+    | '/employees'
     | '/events'
     | '/inventory'
     | '/pos'
@@ -127,6 +138,7 @@ export interface FileRouteTypes {
     | '/'
     | '/access-control'
     | '/customers'
+    | '/employees'
     | '/events'
     | '/inventory'
     | '/pos'
@@ -139,6 +151,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AccessControlRoute: typeof AccessControlRoute
   CustomersRoute: typeof CustomersRoute
+  EmployeesRoute: typeof EmployeesRoute
   EventsRoute: typeof EventsRoute
   InventoryRoute: typeof InventoryRoute
   PosRoute: typeof PosRoute
@@ -168,6 +181,13 @@ declare module '@tanstack/react-router' {
       path: '/customers'
       fullPath: '/customers'
       preLoaderRoute: typeof CustomersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/employees': {
+      id: '/employees'
+      path: '/employees'
+      fullPath: '/employees'
+      preLoaderRoute: typeof EmployeesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/events': {
@@ -219,6 +239,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AccessControlRoute: AccessControlRoute,
   CustomersRoute: CustomersRoute,
+  EmployeesRoute: EmployeesRoute,
   EventsRoute: EventsRoute,
   InventoryRoute: InventoryRoute,
   PosRoute: PosRoute,
