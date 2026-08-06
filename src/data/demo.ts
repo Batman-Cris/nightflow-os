@@ -1,0 +1,344 @@
+import type {
+  Customer,
+  Employee,
+  NoxEvent,
+  Product,
+  Promoter,
+  Sale,
+  Ticket,
+  VipTable,
+} from "@/types/nox";
+
+export const venue = {
+  name: "NOX Club",
+  branch: "Palermo Soho",
+  city: "Buenos Aires",
+  capacity: 1200,
+};
+
+export const events: NoxEvent[] = [
+  {
+    id: "evt_01",
+    name: "Neon Cathedral",
+    date: "2026-08-08T23:30:00",
+    genre: "Techno",
+    artist: "AMELIE LENS",
+    room: "Main Room",
+    capacity: 1200,
+    attendance: 1147,
+    ticketsSold: 1180,
+    revenue: 58400,
+    status: "live",
+  },
+  {
+    id: "evt_02",
+    name: "Afterglow Sessions",
+    date: "2026-08-09T23:00:00",
+    genre: "Melodic House",
+    artist: "MATHAME",
+    room: "Main Room",
+    capacity: 1200,
+    attendance: 0,
+    ticketsSold: 1200,
+    revenue: 61200,
+    status: "sold-out",
+  },
+  {
+    id: "evt_03",
+    name: "Velvet Hour",
+    date: "2026-08-14T22:00:00",
+    genre: "Disco / Funk",
+    artist: "DJ HARVEY",
+    room: "Velvet Lounge",
+    capacity: 420,
+    attendance: 0,
+    ticketsSold: 288,
+    revenue: 14400,
+    status: "scheduled",
+  },
+  {
+    id: "evt_04",
+    name: "Basement Ritual",
+    date: "2026-08-15T23:59:00",
+    genre: "Industrial",
+    artist: "PERC",
+    room: "Basement",
+    capacity: 600,
+    attendance: 0,
+    ticketsSold: 402,
+    revenue: 18090,
+    status: "scheduled",
+  },
+  {
+    id: "evt_05",
+    name: "Golden Hour Rooftop",
+    date: "2026-08-16T18:00:00",
+    genre: "Balearic",
+    artist: "HUNEE",
+    room: "Rooftop",
+    capacity: 350,
+    attendance: 0,
+    ticketsSold: 121,
+    revenue: 4840,
+    status: "draft",
+  },
+  {
+    id: "evt_06",
+    name: "Midnight Mirage",
+    date: "2026-08-22T23:30:00",
+    genre: "Progressive",
+    artist: "TALE OF US",
+    room: "Main Room",
+    capacity: 1200,
+    attendance: 0,
+    ticketsSold: 940,
+    revenue: 51700,
+    status: "scheduled",
+  },
+  {
+    id: "evt_07",
+    name: "Latin Underground",
+    date: "2026-08-23T23:00:00",
+    genre: "Latin House",
+    artist: "NICOLA CRUZ",
+    room: "Main Room",
+    capacity: 1200,
+    attendance: 0,
+    ticketsSold: 610,
+    revenue: 27450,
+    status: "scheduled",
+  },
+  {
+    id: "evt_08",
+    name: "Static Bloom",
+    date: "2026-08-01T23:30:00",
+    genre: "Techno",
+    artist: "I HATE MODELS",
+    room: "Main Room",
+    capacity: 1200,
+    attendance: 1092,
+    ticketsSold: 1104,
+    revenue: 55200,
+    status: "finished",
+  },
+  {
+    id: "evt_09",
+    name: "Silk Room Jazz",
+    date: "2026-07-26T21:00:00",
+    genre: "Live Jazz",
+    artist: "THE NOX TRIO",
+    room: "Velvet Lounge",
+    capacity: 420,
+    attendance: 380,
+    ticketsSold: 391,
+    revenue: 13685,
+    status: "finished",
+  },
+  {
+    id: "evt_10",
+    name: "Warehouse 09",
+    date: "2026-07-19T23:59:00",
+    genre: "Hard Groove",
+    artist: "SPFDJ",
+    room: "Basement",
+    capacity: 600,
+    attendance: 574,
+    ticketsSold: 588,
+    revenue: 26460,
+    status: "finished",
+  },
+];
+
+const tierPrices: Record<string, number> = {
+  General: 45,
+  "Early Bird": 32,
+  VIP: 120,
+  "Guest List": 0,
+  Backstage: 240,
+};
+
+const holders = [
+  ["Sofia Marchetti", "sofia.m@gmail.com"],
+  ["Luca Ferrari", "luca.ferrari@outlook.com"],
+  ["Camila Ortega", "cami.ortega@gmail.com"],
+  ["Tomás Rivas", "trivas@proton.me"],
+  ["Ines Delgado", "ines.d@gmail.com"],
+  ["Mateo Bianchi", "mbianchi@icloud.com"],
+  ["Valentina Cruz", "val.cruz@gmail.com"],
+  ["Nicolás Peña", "npena@gmail.com"],
+  ["Aitana Rojas", "aitana@studio.co"],
+  ["Bruno Silva", "bruno.silva@gmail.com"],
+  ["Julia Werner", "julia.w@gmail.com"],
+  ["Diego Ramos", "dramos@gmail.com"],
+];
+
+const tiers: Ticket["tier"][] = ["General", "Early Bird", "VIP", "Guest List", "Backstage"];
+const statuses: Ticket["status"][] = ["valid", "checked-in", "used", "refunded"];
+
+export const tickets: Ticket[] = holders.flatMap((h, i) =>
+  [0, 1].map((k) => {
+    const tier = tiers[(i + k) % tiers.length];
+    const status = statuses[(i + k * 3) % statuses.length];
+    const idx = i * 2 + k;
+    return {
+      id: `tkt_${String(idx + 1).padStart(3, "0")}`,
+      code: `NOX-${(4821 + idx * 137).toString(36).toUpperCase()}-${String(idx + 11).padStart(2, "0")}`,
+      holder: h[0],
+      email: h[1],
+      event: events[idx % 4].name,
+      tier,
+      price: tierPrices[tier],
+      purchasedAt: `2026-0${idx % 2 === 0 ? 7 : 8}-${String((idx % 27) + 1).padStart(2, "0")}`,
+      status,
+    } satisfies Ticket;
+  }),
+);
+
+export const products: Product[] = [
+  { id: "p01", name: "Grey Goose Bottle", category: "Spirits", supplier: "Diageo Ar", cost: 48, price: 180, stock: 24, minStock: 12, sold: 61 },
+  { id: "p02", name: "Moët & Chandon", category: "Champagne", supplier: "LVMH Dist", cost: 62, price: 260, stock: 7, minStock: 10, sold: 38 },
+  { id: "p03", name: "Espresso Martini", category: "Cocktails", supplier: "In-house", cost: 3.4, price: 16, stock: 999, minStock: 0, sold: 412 },
+  { id: "p04", name: "Gin Tonic Premium", category: "Cocktails", supplier: "In-house", cost: 3.1, price: 14, stock: 999, minStock: 0, sold: 508 },
+  { id: "p05", name: "Corona 355ml", category: "Beer", supplier: "Quilmes SA", cost: 1.2, price: 7, stock: 186, minStock: 120, sold: 744 },
+  { id: "p06", name: "Red Bull", category: "Mixers", supplier: "RB Andina", cost: 1.1, price: 6, stock: 42, minStock: 80, sold: 623 },
+  { id: "p07", name: "Jägermeister", category: "Spirits", supplier: "Mast-Jäger", cost: 26, price: 120, stock: 15, minStock: 8, sold: 44 },
+  { id: "p08", name: "Don Julio 1942", category: "Spirits", supplier: "Diageo Ar", cost: 190, price: 620, stock: 4, minStock: 5, sold: 12 },
+  { id: "p09", name: "Sparkling Water", category: "Non-alcoholic", supplier: "Villavicencio", cost: 0.5, price: 4, stock: 320, minStock: 150, sold: 389 },
+  { id: "p10", name: "Aperol Spritz", category: "Cocktails", supplier: "In-house", cost: 2.9, price: 13, stock: 999, minStock: 0, sold: 296 },
+  { id: "p11", name: "Truffle Fries", category: "Food", supplier: "Cocina NOX", cost: 2.2, price: 11, stock: 60, minStock: 30, sold: 174 },
+  { id: "p12", name: "Absolut Vodka", category: "Spirits", supplier: "Pernod", cost: 22, price: 110, stock: 9, minStock: 12, sold: 57 },
+];
+
+export const customers: Customer[] = [
+  { id: "c01", name: "Sofia Marchetti", email: "sofia.m@gmail.com", phone: "+54 911 4432 8891", birthday: "Aug 12", visits: 34, spent: 12480, tier: "VIP", lastVisit: "2026-08-01", notes: "Always books Table 4. Prefers Grey Goose." },
+  { id: "c02", name: "Luca Ferrari", email: "luca.ferrari@outlook.com", phone: "+54 911 6621 1188", birthday: "Nov 03", visits: 21, spent: 7320, tier: "VIP", lastVisit: "2026-07-26", notes: "Brings large groups on Saturdays." },
+  { id: "c03", name: "Camila Ortega", email: "cami.ortega@gmail.com", phone: "+54 911 3390 7742", birthday: "Aug 09", visits: 18, spent: 4210, tier: "Regular", lastVisit: "2026-08-01", notes: "Birthday this week — send comp bottle." },
+  { id: "c04", name: "Tomás Rivas", email: "trivas@proton.me", phone: "+54 911 5580 2231", birthday: "Feb 21", visits: 12, spent: 2890, tier: "Regular", lastVisit: "2026-07-19", notes: "" },
+  { id: "c05", name: "Ines Delgado", email: "ines.d@gmail.com", phone: "+54 911 7712 4460", birthday: "Jun 30", visits: 27, spent: 9640, tier: "VIP", lastVisit: "2026-08-01", notes: "Industry — comps approved by manager." },
+  { id: "c06", name: "Mateo Bianchi", email: "mbianchi@icloud.com", phone: "+54 911 2245 9903", birthday: "Sep 17", visits: 9, spent: 1740, tier: "Regular", lastVisit: "2026-07-12", notes: "" },
+  { id: "c07", name: "Valentina Cruz", email: "val.cruz@gmail.com", phone: "+54 911 8890 5512", birthday: "Dec 05", visits: 41, spent: 18220, tier: "VIP", lastVisit: "2026-08-01", notes: "Top spender Q3. Champagne only." },
+  { id: "c08", name: "Nicolás Peña", email: "npena@gmail.com", phone: "+54 911 4471 3308", birthday: "Mar 14", visits: 6, spent: 940, tier: "New", lastVisit: "2026-07-26", notes: "" },
+  { id: "c09", name: "Aitana Rojas", email: "aitana@studio.co", phone: "+54 911 9982 7714", birthday: "Aug 22", visits: 15, spent: 5380, tier: "Regular", lastVisit: "2026-07-31", notes: "Photographer — media pass." },
+  { id: "c10", name: "Bruno Silva", email: "bruno.silva@gmail.com", phone: "+54 911 3364 8820", birthday: "Jan 08", visits: 3, spent: 410, tier: "New", lastVisit: "2026-08-01", notes: "" },
+  { id: "c11", name: "Julia Werner", email: "julia.w@gmail.com", phone: "+54 911 7025 1194", birthday: "Oct 27", visits: 24, spent: 8110, tier: "VIP", lastVisit: "2026-07-26", notes: "Guest list +4 standing." },
+  { id: "c12", name: "Diego Ramos", email: "dramos@gmail.com", phone: "+54 911 5518 6673", birthday: "May 02", visits: 11, spent: 2260, tier: "Regular", lastVisit: "2026-07-19", notes: "" },
+];
+
+export const employees: Employee[] = [
+  { id: "e01", name: "Marina Costa", role: "General Manager", shift: "20:00 – 06:00", status: "on-shift", attendance: 98, hourly: 34, email: "marina@noxclub.io" },
+  { id: "e02", name: "Iván Duarte", role: "Head of Security", shift: "22:00 – 06:00", status: "on-shift", attendance: 96, hourly: 26, email: "ivan@noxclub.io" },
+  { id: "e03", name: "Paula Nieves", role: "Head Bartender", shift: "21:00 – 05:00", status: "on-shift", attendance: 94, hourly: 22, email: "paula@noxclub.io" },
+  { id: "e04", name: "Rafa Molina", role: "Bartender", shift: "22:00 – 05:00", status: "break", attendance: 91, hourly: 18, email: "rafa@noxclub.io" },
+  { id: "e05", name: "Sol Vergara", role: "Bartender", shift: "22:00 – 05:00", status: "on-shift", attendance: 89, hourly: 18, email: "sol@noxclub.io" },
+  { id: "e06", name: "Nacho Ferrer", role: "Doorman", shift: "23:00 – 06:00", status: "on-shift", attendance: 97, hourly: 19, email: "nacho@noxclub.io" },
+  { id: "e07", name: "Lucía Prat", role: "VIP Host", shift: "23:00 – 05:00", status: "on-shift", attendance: 93, hourly: 21, email: "lucia@noxclub.io" },
+  { id: "e08", name: "Ema Torres", role: "Cashier", shift: "21:00 – 04:00", status: "off", attendance: 88, hourly: 16, email: "ema@noxclub.io" },
+  { id: "e09", name: "Kevin Alsina", role: "Sound Engineer", shift: "20:00 – 04:00", status: "on-shift", attendance: 99, hourly: 30, email: "kevin@noxclub.io" },
+  { id: "e10", name: "Rocío Marín", role: "Marketing Lead", shift: "14:00 – 22:00", status: "off", attendance: 95, hourly: 25, email: "rocio@noxclub.io" },
+  { id: "e11", name: "Franco Lema", role: "Barback", shift: "22:00 – 06:00", status: "on-shift", attendance: 86, hourly: 14, email: "franco@noxclub.io" },
+  { id: "e12", name: "Tania Ruiz", role: "Coat Check", shift: "23:00 – 06:00", status: "break", attendance: 90, hourly: 14, email: "tania@noxclub.io" },
+];
+
+export const promoters: Promoter[] = [
+  { id: "pr01", name: "Kiara Bosch", code: "KIARA", guests: 212, ticketsSold: 148, revenue: 6660, commission: 999, tier: "Platinum" },
+  { id: "pr02", name: "Seba Ortiz", code: "SEBAO", guests: 188, ticketsSold: 131, revenue: 5895, commission: 884, tier: "Platinum" },
+  { id: "pr03", name: "Mica Lund", code: "MICAL", guests: 154, ticketsSold: 109, revenue: 4905, commission: 735, tier: "Gold" },
+  { id: "pr04", name: "Toto Vidal", code: "TOTOV", guests: 141, ticketsSold: 96, revenue: 4320, commission: 648, tier: "Gold" },
+  { id: "pr05", name: "Lara Fuentes", code: "LARAF", guests: 122, ticketsSold: 84, revenue: 3780, commission: 567, tier: "Gold" },
+  { id: "pr06", name: "Nico Bravo", code: "NBRAVO", guests: 98, ticketsSold: 66, revenue: 2970, commission: 445, tier: "Silver" },
+  { id: "pr07", name: "Ari Solano", code: "ARIS", guests: 87, ticketsSold: 59, revenue: 2655, commission: 398, tier: "Silver" },
+  { id: "pr08", name: "Pia Zabala", code: "PIAZ", guests: 76, ticketsSold: 51, revenue: 2295, commission: 344, tier: "Silver" },
+  { id: "pr09", name: "Gonza Reyes", code: "GONZAR", guests: 64, ticketsSold: 43, revenue: 1935, commission: 290, tier: "Silver" },
+  { id: "pr10", name: "Emi Castro", code: "EMIC", guests: 51, ticketsSold: 34, revenue: 1530, commission: 229, tier: "Silver" },
+];
+
+export const vipTables: VipTable[] = [
+  { id: "t01", name: "Table 1", zone: "Main Balcony", seats: 8, minSpend: 1200, host: "Valentina Cruz", status: "occupied", spend: 2340 },
+  { id: "t02", name: "Table 2", zone: "Main Balcony", seats: 8, minSpend: 1200, host: "Sofia Marchetti", status: "occupied", spend: 1780 },
+  { id: "t03", name: "Table 3", zone: "Main Balcony", seats: 6, minSpend: 900, host: null, status: "open", spend: 0 },
+  { id: "t04", name: "Table 4", zone: "DJ Booth", seats: 10, minSpend: 2000, host: "Julia Werner", status: "reserved", spend: 0 },
+  { id: "t05", name: "Table 5", zone: "DJ Booth", seats: 10, minSpend: 2000, host: "Ines Delgado", status: "occupied", spend: 3120 },
+  { id: "t06", name: "Table 6", zone: "Velvet Lounge", seats: 4, minSpend: 600, host: null, status: "open", spend: 0 },
+  { id: "t07", name: "Table 7", zone: "Velvet Lounge", seats: 4, minSpend: 600, host: "Luca Ferrari", status: "occupied", spend: 940 },
+  { id: "t08", name: "Table 8", zone: "Rooftop", seats: 12, minSpend: 2500, host: "Grupo Aurora", status: "reserved", spend: 0 },
+  { id: "t09", name: "Table 9", zone: "Rooftop", seats: 6, minSpend: 1000, host: null, status: "open", spend: 0 },
+  { id: "t10", name: "Table 10", zone: "Basement", seats: 6, minSpend: 800, host: "Aitana Rojas", status: "closed", spend: 1460 },
+];
+
+export const sales: Sale[] = [
+  { id: "s01", time: "01:42", channel: "POS", items: 4, total: 62, method: "Card", cashier: "Paula Nieves" },
+  { id: "s02", time: "01:39", channel: "VIP", items: 2, total: 440, method: "Card", cashier: "Lucía Prat" },
+  { id: "s03", time: "01:35", channel: "POS", items: 6, total: 88, method: "Cash", cashier: "Rafa Molina" },
+  { id: "s04", time: "01:31", channel: "Door", items: 1, total: 45, method: "QR", cashier: "Nacho Ferrer" },
+  { id: "s05", time: "01:28", channel: "POS", items: 3, total: 41, method: "QR", cashier: "Sol Vergara" },
+  { id: "s06", time: "01:22", channel: "Online", items: 2, total: 90, method: "Card", cashier: "—" },
+  { id: "s07", time: "01:18", channel: "POS", items: 5, total: 73, method: "Card", cashier: "Paula Nieves" },
+  { id: "s08", time: "01:11", channel: "VIP", items: 3, total: 780, method: "Transfer", cashier: "Lucía Prat" },
+  { id: "s09", time: "01:04", channel: "POS", items: 2, total: 28, method: "Cash", cashier: "Rafa Molina" },
+  { id: "s10", time: "00:57", channel: "Door", items: 2, total: 90, method: "Card", cashier: "Nacho Ferrer" },
+  { id: "s11", time: "00:51", channel: "POS", items: 7, total: 104, method: "Card", cashier: "Sol Vergara" },
+  { id: "s12", time: "00:44", channel: "Online", items: 1, total: 45, method: "Card", cashier: "—" },
+];
+
+export const salesPerHour = [
+  { hour: "20:00", sales: 1200, tickets: 40 },
+  { hour: "21:00", sales: 2600, tickets: 88 },
+  { hour: "22:00", sales: 5400, tickets: 176 },
+  { hour: "23:00", sales: 9100, tickets: 312 },
+  { hour: "00:00", sales: 13800, tickets: 268 },
+  { hour: "01:00", sales: 15200, tickets: 154 },
+  { hour: "02:00", sales: 11900, tickets: 92 },
+  { hour: "03:00", sales: 8300, tickets: 40 },
+  { hour: "04:00", sales: 4100, tickets: 10 },
+];
+
+export const revenueTrend = [
+  { day: "Mon", revenue: 8200, profit: 3100 },
+  { day: "Tue", revenue: 6400, profit: 2200 },
+  { day: "Wed", revenue: 11800, profit: 4600 },
+  { day: "Thu", revenue: 19400, profit: 7900 },
+  { day: "Fri", revenue: 42800, profit: 18200 },
+  { day: "Sat", revenue: 58400, profit: 26100 },
+  { day: "Sun", revenue: 21600, profit: 8400 },
+];
+
+export const attendanceTrend = [
+  { day: "Mon", guests: 180 },
+  { day: "Tue", guests: 140 },
+  { day: "Wed", guests: 320 },
+  { day: "Thu", guests: 540 },
+  { day: "Fri", guests: 980 },
+  { day: "Sat", guests: 1147 },
+  { day: "Sun", guests: 610 },
+];
+
+export const popularProducts = [
+  { name: "Gin Tonic", value: 508 },
+  { name: "Espresso Martini", value: 412 },
+  { name: "Corona", value: 744 },
+  { name: "Red Bull", value: 623 },
+  { name: "Aperol Spritz", value: 296 },
+];
+
+export const activity = [
+  { id: "a1", time: "01:42", text: "Table 5 reached 156% of minimum spend", tone: "success" as const },
+  { id: "a2", time: "01:37", text: "Red Bull stock below minimum (42 / 80)", tone: "warning" as const },
+  { id: "a3", time: "01:29", text: "Ticket NOX-3KD-14 rejected — already used", tone: "danger" as const },
+  { id: "a4", time: "01:12", text: "Kiara Bosch checked in 18 guests", tone: "default" as const },
+  { id: "a5", time: "00:58", text: "Afterglow Sessions is officially sold out", tone: "success" as const },
+  { id: "a6", time: "00:41", text: "Shift started — Sol Vergara (Bar 2)", tone: "default" as const },
+  { id: "a7", time: "00:20", text: "Payout of $999 scheduled for Kiara Bosch", tone: "default" as const },
+];
+
+export const notifications = [
+  { id: "n1", title: "Critical stock", body: "Red Bull and Moët are below minimum stock.", time: "3m ago", unread: true },
+  { id: "n2", title: "Sold out", body: "Afterglow Sessions sold its last 12 tickets.", time: "24m ago", unread: true },
+  { id: "n3", title: "Door alert", body: "2 duplicate QR scans in the last hour.", time: "1h ago", unread: true },
+  { id: "n4", title: "Payout ready", body: "Promoter commissions for July are ready to approve.", time: "5h ago", unread: false },
+  { id: "n5", title: "New VIP booking", body: "Table 8 reserved for Saturday, min spend $2,500.", time: "Yesterday", unread: false },
+];
+
+export const posCategories = ["All", "Cocktails", "Spirits", "Beer", "Champagne", "Mixers", "Food", "Non-alcoholic"];
+
+export const currency = (n: number) =>
+  n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
