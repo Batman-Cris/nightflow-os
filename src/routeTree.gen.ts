@@ -21,6 +21,7 @@ import { Route as ProductsRouteImport } from './routes/products'
 import { Route as PromotersRouteImport } from './routes/promoters'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as SalesRouteImport } from './routes/sales'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as TicketsRouteImport } from './routes/tickets'
 import { Route as VipTablesRouteImport } from './routes/vip-tables'
 
@@ -84,6 +85,11 @@ const SalesRoute = SalesRouteImport.update({
   path: '/sales',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TicketsRoute = TicketsRouteImport.update({
   id: '/tickets',
   path: '/tickets',
@@ -108,6 +114,7 @@ export interface FileRoutesByFullPath {
   '/promoters': typeof PromotersRoute
   '/reports': typeof ReportsRoute
   '/sales': typeof SalesRoute
+  '/settings': typeof SettingsRoute
   '/tickets': typeof TicketsRoute
   '/vip-tables': typeof VipTablesRoute
 }
@@ -124,6 +131,7 @@ export interface FileRoutesByTo {
   '/promoters': typeof PromotersRoute
   '/reports': typeof ReportsRoute
   '/sales': typeof SalesRoute
+  '/settings': typeof SettingsRoute
   '/tickets': typeof TicketsRoute
   '/vip-tables': typeof VipTablesRoute
 }
@@ -141,6 +149,7 @@ export interface FileRoutesById {
   '/promoters': typeof PromotersRoute
   '/reports': typeof ReportsRoute
   '/sales': typeof SalesRoute
+  '/settings': typeof SettingsRoute
   '/tickets': typeof TicketsRoute
   '/vip-tables': typeof VipTablesRoute
 }
@@ -159,6 +168,7 @@ export interface FileRouteTypes {
     | '/promoters'
     | '/reports'
     | '/sales'
+    | '/settings'
     | '/tickets'
     | '/vip-tables'
   fileRoutesByTo: FileRoutesByTo
@@ -175,6 +185,7 @@ export interface FileRouteTypes {
     | '/promoters'
     | '/reports'
     | '/sales'
+    | '/settings'
     | '/tickets'
     | '/vip-tables'
   id:
@@ -191,6 +202,7 @@ export interface FileRouteTypes {
     | '/promoters'
     | '/reports'
     | '/sales'
+    | '/settings'
     | '/tickets'
     | '/vip-tables'
   fileRoutesById: FileRoutesById
@@ -208,6 +220,7 @@ export interface RootRouteChildren {
   PromotersRoute: typeof PromotersRoute
   ReportsRoute: typeof ReportsRoute
   SalesRoute: typeof SalesRoute
+  SettingsRoute: typeof SettingsRoute
   TicketsRoute: typeof TicketsRoute
   VipTablesRoute: typeof VipTablesRoute
 }
@@ -298,6 +311,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SalesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tickets': {
       id: '/tickets'
       path: '/tickets'
@@ -328,6 +348,7 @@ const rootRouteChildren: RootRouteChildren = {
   PromotersRoute: PromotersRoute,
   ReportsRoute: ReportsRoute,
   SalesRoute: SalesRoute,
+  SettingsRoute: SettingsRoute,
   TicketsRoute: TicketsRoute,
   VipTablesRoute: VipTablesRoute,
 }
