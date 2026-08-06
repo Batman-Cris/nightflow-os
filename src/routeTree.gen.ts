@@ -14,6 +14,7 @@ import { Route as AccessControlRouteImport } from './routes/access-control'
 import { Route as EventsRouteImport } from './routes/events'
 import { Route as InventoryRouteImport } from './routes/inventory'
 import { Route as PosRouteImport } from './routes/pos'
+import { Route as ProductsRouteImport } from './routes/products'
 import { Route as SalesRouteImport } from './routes/sales'
 import { Route as TicketsRouteImport } from './routes/tickets'
 
@@ -42,6 +43,11 @@ const PosRoute = PosRouteImport.update({
   path: '/pos',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProductsRoute = ProductsRouteImport.update({
+  id: '/products',
+  path: '/products',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SalesRoute = SalesRouteImport.update({
   id: '/sales',
   path: '/sales',
@@ -59,6 +65,7 @@ export interface FileRoutesByFullPath {
   '/events': typeof EventsRoute
   '/inventory': typeof InventoryRoute
   '/pos': typeof PosRoute
+  '/products': typeof ProductsRoute
   '/sales': typeof SalesRoute
   '/tickets': typeof TicketsRoute
 }
@@ -68,6 +75,7 @@ export interface FileRoutesByTo {
   '/events': typeof EventsRoute
   '/inventory': typeof InventoryRoute
   '/pos': typeof PosRoute
+  '/products': typeof ProductsRoute
   '/sales': typeof SalesRoute
   '/tickets': typeof TicketsRoute
 }
@@ -78,6 +86,7 @@ export interface FileRoutesById {
   '/events': typeof EventsRoute
   '/inventory': typeof InventoryRoute
   '/pos': typeof PosRoute
+  '/products': typeof ProductsRoute
   '/sales': typeof SalesRoute
   '/tickets': typeof TicketsRoute
 }
@@ -89,6 +98,7 @@ export interface FileRouteTypes {
     | '/events'
     | '/inventory'
     | '/pos'
+    | '/products'
     | '/sales'
     | '/tickets'
   fileRoutesByTo: FileRoutesByTo
@@ -98,6 +108,7 @@ export interface FileRouteTypes {
     | '/events'
     | '/inventory'
     | '/pos'
+    | '/products'
     | '/sales'
     | '/tickets'
   id:
@@ -107,6 +118,7 @@ export interface FileRouteTypes {
     | '/events'
     | '/inventory'
     | '/pos'
+    | '/products'
     | '/sales'
     | '/tickets'
   fileRoutesById: FileRoutesById
@@ -117,6 +129,7 @@ export interface RootRouteChildren {
   EventsRoute: typeof EventsRoute
   InventoryRoute: typeof InventoryRoute
   PosRoute: typeof PosRoute
+  ProductsRoute: typeof ProductsRoute
   SalesRoute: typeof SalesRoute
   TicketsRoute: typeof TicketsRoute
 }
@@ -158,6 +171,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/products': {
+      id: '/products'
+      path: '/products'
+      fullPath: '/products'
+      preLoaderRoute: typeof ProductsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sales': {
       id: '/sales'
       path: '/sales'
@@ -181,6 +201,7 @@ const rootRouteChildren: RootRouteChildren = {
   EventsRoute: EventsRoute,
   InventoryRoute: InventoryRoute,
   PosRoute: PosRoute,
+  ProductsRoute: ProductsRoute,
   SalesRoute: SalesRoute,
   TicketsRoute: TicketsRoute,
 }
