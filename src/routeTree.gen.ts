@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AccessControlRouteImport } from './routes/access-control'
+import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as CustomersRouteImport } from './routes/customers'
 import { Route as EmployeesRouteImport } from './routes/employees'
 import { Route as EventsRouteImport } from './routes/events'
@@ -31,6 +32,11 @@ const IndexRoute = IndexRouteImport.update({
 const AccessControlRoute = AccessControlRouteImport.update({
   id: '/access-control',
   path: '/access-control',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnalyticsRoute = AnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CustomersRoute = CustomersRouteImport.update({
@@ -92,6 +98,7 @@ const VipTablesRoute = VipTablesRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/access-control': typeof AccessControlRoute
+  '/analytics': typeof AnalyticsRoute
   '/customers': typeof CustomersRoute
   '/employees': typeof EmployeesRoute
   '/events': typeof EventsRoute
@@ -107,6 +114,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/access-control': typeof AccessControlRoute
+  '/analytics': typeof AnalyticsRoute
   '/customers': typeof CustomersRoute
   '/employees': typeof EmployeesRoute
   '/events': typeof EventsRoute
@@ -123,6 +131,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/access-control': typeof AccessControlRoute
+  '/analytics': typeof AnalyticsRoute
   '/customers': typeof CustomersRoute
   '/employees': typeof EmployeesRoute
   '/events': typeof EventsRoute
@@ -140,6 +149,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/access-control'
+    | '/analytics'
     | '/customers'
     | '/employees'
     | '/events'
@@ -155,6 +165,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/access-control'
+    | '/analytics'
     | '/customers'
     | '/employees'
     | '/events'
@@ -170,6 +181,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/access-control'
+    | '/analytics'
     | '/customers'
     | '/employees'
     | '/events'
@@ -186,6 +198,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AccessControlRoute: typeof AccessControlRoute
+  AnalyticsRoute: typeof AnalyticsRoute
   CustomersRoute: typeof CustomersRoute
   EmployeesRoute: typeof EmployeesRoute
   EventsRoute: typeof EventsRoute
@@ -213,6 +226,13 @@ declare module '@tanstack/react-router' {
       path: '/access-control'
       fullPath: '/access-control'
       preLoaderRoute: typeof AccessControlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/analytics': {
+      id: '/analytics'
+      path: '/analytics'
+      fullPath: '/analytics'
+      preLoaderRoute: typeof AnalyticsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/customers': {
@@ -298,6 +318,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AccessControlRoute: AccessControlRoute,
+  AnalyticsRoute: AnalyticsRoute,
   CustomersRoute: CustomersRoute,
   EmployeesRoute: EmployeesRoute,
   EventsRoute: EventsRoute,
