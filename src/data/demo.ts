@@ -177,22 +177,23 @@ const statuses: Ticket["status"][] = ["valid", "checked-in", "used", "refunded"]
 
 export const tickets: Ticket[] = holders.flatMap((h, i) =>
   [0, 1].map((k) => {
-    const tier = tiers[(i + k) % tiers.length];
-    const status = statuses[(i + k * 3) % statuses.length];
+    const tier = tiers[(i + k) % tiers.length]!;
+    const status = statuses[(i + k * 3) % statuses.length]!;
     const idx = i * 2 + k;
     return {
       id: `tkt_${String(idx + 1).padStart(3, "0")}`,
       code: `NOX-${(4821 + idx * 137).toString(36).toUpperCase()}-${String(idx + 11).padStart(2, "0")}`,
-      holder: h[0],
-      email: h[1],
-      event: events[idx % 4].name,
+      holder: h[0]!,
+      email: h[1]!,
+      event: events[idx % 4]!.name,
       tier,
-      price: tierPrices[tier],
+      price: tierPrices[tier]!,
       purchasedAt: `2026-0${idx % 2 === 0 ? 7 : 8}-${String((idx % 27) + 1).padStart(2, "0")}`,
       status,
     } satisfies Ticket;
   }),
 );
+
 
 export const products: Product[] = [
   { id: "p01", name: "Grey Goose Bottle", category: "Spirits", supplier: "Diageo Ar", cost: 48, price: 180, stock: 24, minStock: 12, sold: 61 },
