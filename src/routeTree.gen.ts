@@ -16,6 +16,7 @@ import { Route as CustomersRouteImport } from './routes/customers'
 import { Route as EmployeesRouteImport } from './routes/employees'
 import { Route as EventsRouteImport } from './routes/events'
 import { Route as InventoryRouteImport } from './routes/inventory'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as PosRouteImport } from './routes/pos'
 import { Route as ProductsRouteImport } from './routes/products'
 import { Route as PromotersRouteImport } from './routes/promoters'
@@ -58,6 +59,11 @@ const EventsRoute = EventsRouteImport.update({
 const InventoryRoute = InventoryRouteImport.update({
   id: '/inventory',
   path: '/inventory',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PosRoute = PosRouteImport.update({
@@ -109,6 +115,7 @@ export interface FileRoutesByFullPath {
   '/employees': typeof EmployeesRoute
   '/events': typeof EventsRoute
   '/inventory': typeof InventoryRoute
+  '/login': typeof LoginRoute
   '/pos': typeof PosRoute
   '/products': typeof ProductsRoute
   '/promoters': typeof PromotersRoute
@@ -126,6 +133,7 @@ export interface FileRoutesByTo {
   '/employees': typeof EmployeesRoute
   '/events': typeof EventsRoute
   '/inventory': typeof InventoryRoute
+  '/login': typeof LoginRoute
   '/pos': typeof PosRoute
   '/products': typeof ProductsRoute
   '/promoters': typeof PromotersRoute
@@ -144,6 +152,7 @@ export interface FileRoutesById {
   '/employees': typeof EmployeesRoute
   '/events': typeof EventsRoute
   '/inventory': typeof InventoryRoute
+  '/login': typeof LoginRoute
   '/pos': typeof PosRoute
   '/products': typeof ProductsRoute
   '/promoters': typeof PromotersRoute
@@ -163,6 +172,7 @@ export interface FileRouteTypes {
     | '/employees'
     | '/events'
     | '/inventory'
+    | '/login'
     | '/pos'
     | '/products'
     | '/promoters'
@@ -180,6 +190,7 @@ export interface FileRouteTypes {
     | '/employees'
     | '/events'
     | '/inventory'
+    | '/login'
     | '/pos'
     | '/products'
     | '/promoters'
@@ -197,6 +208,7 @@ export interface FileRouteTypes {
     | '/employees'
     | '/events'
     | '/inventory'
+    | '/login'
     | '/pos'
     | '/products'
     | '/promoters'
@@ -215,6 +227,7 @@ export interface RootRouteChildren {
   EmployeesRoute: typeof EmployeesRoute
   EventsRoute: typeof EventsRoute
   InventoryRoute: typeof InventoryRoute
+  LoginRoute: typeof LoginRoute
   PosRoute: typeof PosRoute
   ProductsRoute: typeof ProductsRoute
   PromotersRoute: typeof PromotersRoute
@@ -274,6 +287,13 @@ declare module '@tanstack/react-router' {
       path: '/inventory'
       fullPath: '/inventory'
       preLoaderRoute: typeof InventoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pos': {
@@ -343,6 +363,7 @@ const rootRouteChildren: RootRouteChildren = {
   EmployeesRoute: EmployeesRoute,
   EventsRoute: EventsRoute,
   InventoryRoute: InventoryRoute,
+  LoginRoute: LoginRoute,
   PosRoute: PosRoute,
   ProductsRoute: ProductsRoute,
   PromotersRoute: PromotersRoute,
