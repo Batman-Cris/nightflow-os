@@ -15,7 +15,7 @@ import {
 } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 
-function ChartFrame({ children, height = 260 }: { children: ReactNode; height?: number }) {
+function ChartFrame({ children, height = 260 }: { children: ReactNode; height?: number | undefined }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   if (!mounted) return <Skeleton className="w-full rounded-xl" style={{ height }} />;
