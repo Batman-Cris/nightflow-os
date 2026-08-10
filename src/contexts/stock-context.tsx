@@ -267,36 +267,37 @@ export function StockProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
-  const receivePurchaseOrder = useCallback((orderId: string, user = "Franco Lema") => {
-    const time = nowLabel();
-    setPurchaseOrders((prev) => {
-      const order = prev.find((o) => o.id === orderId);
-      if (!order || order.status !== "sent") return prev;
+  const receivePurchaseOrder = useCallback(
+    (orderId: string, user = "Franco Lema") => {
+      const order = purchaseOrders.find((o) => o.id === orderId);
+      if (!order || order.status !== "sent") return;
+      const time = nowLabel();
 
-      setProducts((currentProducts) => {
-        const received = new Map(order.lines.map((l) => [l.productId, l.qty]));
-        return currentProducts.map((p) =>
+      const received = new Map(order.lines.map((l) => [l.productId, l.qty]));
+      setProducts((prev) =>
+        prev.map((p) =>
           received.has(p.id) ? { ...p, stock: p.stock + (received.get(p.id) ?? 0) } : p,
-        );
-      });
-
-      setMovements((currentMovements) => {
-        const restocks: StockMovement[] = order.lines.map((line) => ({
-          id: uid(`m_${line.productId}`),
-          time,
-          item: demoProducts.find((p) => p.id === line.productId)?.name ?? line.productId,
-          type: "Restock" as const,
-          qty: line.qty,
-          user,
-        }));
-        return [...restocks, ...currentMovements];
-      });
-
-      return prev.map((o) =>
-        o.id === orderId ? { ...o, status: "received", receivedAt: `Today ${time}` } : o,
+        ),
       );
-    });
-  }, []);
+
+      const restocks: StockMovement[] = order.lines.map((line) => ({
+        id: uid(`m_${line.productId}`),
+        time,
+        item: products.find((p) => p.id === line.productId)?.name ?? line.productId,
+        type: "Restock",
+        qty: line.qty,
+        user,
+      }));
+      setMovements((prev) => [...restocks, ...prev]);
+
+      setPurchaseOrders((prev) =>
+        prev.map((o) =>
+          o.id === orderId ? { ...o, status: "received", receivedAt: `Today ${time}` } : o,
+        ),
+      );
+    },
+    [purchaseOrders, products],
+  );
 
   const recordSale = useCallback((sale: Omit<Sale, "id">) => {
     setSales((prev) => [{ ...sale, id: uid("s") }, ...prev]);
