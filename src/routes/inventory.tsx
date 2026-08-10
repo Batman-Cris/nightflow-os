@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { AlertTriangle, Boxes, PackageCheck, TrendingDown } from "lucide-react";
-import { toast } from "sonner";
 
 import { AppShell } from "@/components/layout/app-shell";
 import { Panel, Pill, StatCard } from "@/components/nox/primitives";
@@ -51,12 +50,8 @@ function InventoryPage() {
       title="Inventory"
       description="Everything behind the bar, counted and watched."
       actions={
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => toast.success("Purchase order draft created.")}
-        >
-          Create purchase order
+        <Button size="sm" variant="outline" asChild>
+          <Link to="/purchasing">Create purchase order</Link>
         </Button>
       }
     >
