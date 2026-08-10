@@ -41,6 +41,44 @@ const INITIAL_MOVEMENTS: StockMovement[] = [
 
 export type SaleLine = { productId: string; qty: number };
 
+export type PurchaseOrderStatus = "draft" | "sent" | "received";
+
+export type PurchaseOrderLine = {
+  productId: string;
+  qty: number;
+  unitCost: number;
+};
+
+export type PurchaseOrder = {
+  id: string;
+  reference: string;
+  supplier: string;
+  status: PurchaseOrderStatus;
+  createdAt: string;
+  receivedAt?: string;
+  lines: PurchaseOrderLine[];
+};
+
+const INITIAL_ORDERS: PurchaseOrder[] = [
+  {
+    id: "po_seed_1",
+    reference: "PO-1041",
+    supplier: "Quilmes SA",
+    status: "sent",
+    createdAt: "Yesterday 18:20",
+    lines: [{ productId: "p5", qty: 240, unitCost: 1.1 }],
+  },
+  {
+    id: "po_seed_2",
+    reference: "PO-1040",
+    supplier: "RB Andina",
+    status: "received",
+    createdAt: "Mon 11:05",
+    receivedAt: "Mon 17:40",
+    lines: [{ productId: "p6", qty: 180, unitCost: 1.4 }],
+  },
+];
+
 export type SellResult = {
   success: boolean;
   /** Finished-product ids that couldn't be sold because a required ingredient/stock ran out. */
@@ -64,6 +102,13 @@ type StockValue = {
   /** Logs a completed transaction for the Sales feed — call after a successful `sell()`. */
   recordSale: (sale: Omit<Sale, "id">) => void;
   addRecipe: (recipe: Omit<Recipe, "id">) => void;
+  purchaseOrders: PurchaseOrder[];
+  /** Creates a draft purchase order for a supplier. */
+  createPurchaseOrder: (supplier: string, lines: PurchaseOrderLine[]) => PurchaseOrder;
+  /** Moves a draft order to "sent". */
+  sendPurchaseOrder: (orderId: string) => void;
+  /** Marks a sent order received: real stock goes up and each line is logged as a Restock movement. */
+  receivePurchaseOrder: (orderId: string, user?: string) => void;
 };
 
 const StockContext = createContext<StockValue | null>(null);
@@ -78,6 +123,7 @@ export function StockProvider({ children }: { children: ReactNode }) {
   const [movements, setMovements] = useState<StockMovement[]>(INITIAL_MOVEMENTS);
   const [recipes, setRecipes] = useState<Recipe[]>(demoRecipes);
   const [sales, setSales] = useState<Sale[]>(demoSales);
+  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>(INITIAL_ORDERS);
 
   const recipeFor = useCallback(
     (productId: string) => recipes.find((r) => r.productId === productId),
@@ -202,6 +248,56 @@ export function StockProvider({ children }: { children: ReactNode }) {
     setRecipes((prev) => [...prev, { ...recipe, id: uid("r") }]);
   }, []);
 
+  const createPurchaseOrder = useCallback((supplier: string, lines: PurchaseOrderLine[]) => {
+    const order: PurchaseOrder = {
+      id: uid("po"),
+      reference: `PO-${Math.floor(1100 + Math.random() * 800)}`,
+      supplier,
+      status: "draft",
+      createdAt: `Today ${nowLabel()}`,
+      lines: lines.filter((l) => l.qty > 0),
+    };
+    setPurchaseOrders((prev) => [order, ...prev]);
+    return order;
+  }, []);
+
+  const sendPurchaseOrder = useCallback((orderId: string) => {
+    setPurchaseOrders((prev) =>
+      prev.map((o) => (o.id === orderId && o.status === "draft" ? { ...o, status: "sent" } : o)),
+    );
+  }, []);
+
+  const receivePurchaseOrder = useCallback((orderId: string, user = "Franco Lema") => {
+    const time = nowLabel();
+    setPurchaseOrders((prev) => {
+      const order = prev.find((o) => o.id === orderId);
+      if (!order || order.status !== "sent") return prev;
+
+      setProducts((currentProducts) => {
+        const received = new Map(order.lines.map((l) => [l.productId, l.qty]));
+        return currentProducts.map((p) =>
+          received.has(p.id) ? { ...p, stock: p.stock + (received.get(p.id) ?? 0) } : p,
+        );
+      });
+
+      setMovements((currentMovements) => {
+        const restocks: StockMovement[] = order.lines.map((line) => ({
+          id: uid(`m_${line.productId}`),
+          time,
+          item: demoProducts.find((p) => p.id === line.productId)?.name ?? line.productId,
+          type: "Restock" as const,
+          qty: line.qty,
+          user,
+        }));
+        return [...restocks, ...currentMovements];
+      });
+
+      return prev.map((o) =>
+        o.id === orderId ? { ...o, status: "received", receivedAt: `Today ${time}` } : o,
+      );
+    });
+  }, []);
+
   const recordSale = useCallback((sale: Omit<Sale, "id">) => {
     setSales((prev) => [{ ...sale, id: uid("s") }, ...prev]);
   }, []);
@@ -218,6 +314,10 @@ export function StockProvider({ children }: { children: ReactNode }) {
       sell,
       recordSale,
       addRecipe,
+      purchaseOrders,
+      createPurchaseOrder,
+      sendPurchaseOrder,
+      receivePurchaseOrder,
     }),
     [
       products,
@@ -230,6 +330,10 @@ export function StockProvider({ children }: { children: ReactNode }) {
       sell,
       recordSale,
       addRecipe,
+      purchaseOrders,
+      createPurchaseOrder,
+      sendPurchaseOrder,
+      receivePurchaseOrder,
     ],
   );
 
