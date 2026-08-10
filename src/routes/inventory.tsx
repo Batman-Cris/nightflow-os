@@ -16,7 +16,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { currency, products } from "@/data/demo";
+import { currency } from "@/data/demo";
+import { useStock } from "@/contexts/stock-context";
 
 export const Route = createFileRoute("/inventory")({
   head: () => ({
@@ -24,7 +25,8 @@ export const Route = createFileRoute("/inventory")({
       { title: "Inventory — NOX OS" },
       {
         name: "description",
-        content: "Stock levels, minimums, suppliers and movement history with automatic low-stock alerts.",
+        content:
+          "Stock levels, minimums, suppliers and movement history with automatic low-stock alerts.",
       },
       { property: "og:title", content: "Inventory — NOX OS" },
       { property: "og:description", content: "Stock levels, suppliers and low-stock alerts." },
@@ -33,18 +35,8 @@ export const Route = createFileRoute("/inventory")({
   component: InventoryPage,
 });
 
-const movements = [
-  { id: "m1", time: "01:38", item: "Corona 355ml", type: "Sale", qty: -12, user: "Rafa Molina" },
-  { id: "m2", time: "01:20", item: "Grey Goose Bottle", type: "Sale", qty: -1, user: "Lucía Prat" },
-  { id: "m3", time: "00:55", item: "Red Bull", type: "Sale", qty: -18, user: "Sol Vergara" },
-  { id: "m4", time: "00:32", item: "Moët & Chandon", type: "Sale", qty: -2, user: "Lucía Prat" },
-  { id: "m5", time: "23:10", item: "Corona 355ml", type: "Restock", qty: +240, user: "Franco Lema" },
-  { id: "m6", time: "22:44", item: "Absolut Vodka", type: "Breakage", qty: -1, user: "Franco Lema" },
-  { id: "m7", time: "20:05", item: "Sparkling Water", type: "Restock", qty: +180, user: "Franco Lema" },
-  { id: "m8", time: "19:40", item: "Truffle Fries", type: "Restock", qty: +60, user: "Cocina NOX" },
-];
-
 function InventoryPage() {
+  const { products, movements } = useStock();
   const [query, setQuery] = useState("");
   const rows = products.filter(
     (p) =>
@@ -59,15 +51,29 @@ function InventoryPage() {
       title="Inventory"
       description="Everything behind the bar, counted and watched."
       actions={
-        <Button size="sm" variant="outline" onClick={() => toast.success("Purchase order draft created.")}>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => toast.success("Purchase order draft created.")}
+        >
           Create purchase order
         </Button>
       }
     >
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="SKUs tracked" value={String(products.length)} icon={Boxes} />
-        <StatCard label="Stock value" value={currency(stockValue)} delta={-4.1} icon={PackageCheck} />
-        <StatCard label="Below minimum" value={String(critical.length)} icon={AlertTriangle} hint="reorder now" />
+        <StatCard
+          label="Stock value"
+          value={currency(stockValue)}
+          delta={-4.1}
+          icon={PackageCheck}
+        />
+        <StatCard
+          label="Below minimum"
+          value={String(critical.length)}
+          icon={AlertTriangle}
+          hint="reorder now"
+        />
         <StatCard label="Waste this week" value={currency(320)} delta={-11.5} icon={TrendingDown} />
       </div>
 
@@ -165,7 +171,17 @@ function InventoryPage() {
                 <TableCell className="font-mono text-xs">{m.time}</TableCell>
                 <TableCell className="font-medium">{m.item}</TableCell>
                 <TableCell>
-                  <Pill tone={m.type === "Restock" ? "success" : m.type === "Breakage" ? "danger" : "muted"}>
+                  <Pill
+                    tone={
+                      m.type === "Restock"
+                        ? "success"
+                        : m.type === "Breakage"
+                          ? "danger"
+                          : m.type === "Recipe"
+                            ? "primary"
+                            : "muted"
+                    }
+                  >
                     {m.type}
                   </Pill>
                 </TableCell>
