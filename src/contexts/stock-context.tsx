@@ -66,7 +66,7 @@ const INITIAL_ORDERS: PurchaseOrder[] = [
     supplier: "Quilmes SA",
     status: "sent",
     createdAt: "Yesterday 18:20",
-    lines: [{ productId: "p5", qty: 240, unitCost: 1.1 }],
+    lines: [{ productId: "p05", qty: 240, unitCost: 1.1 }],
   },
   {
     id: "po_seed_2",
@@ -75,7 +75,7 @@ const INITIAL_ORDERS: PurchaseOrder[] = [
     status: "received",
     createdAt: "Mon 11:05",
     receivedAt: "Mon 17:40",
-    lines: [{ productId: "p6", qty: 180, unitCost: 1.4 }],
+    lines: [{ productId: "p06", qty: 180, unitCost: 1.4 }],
   },
 ];
 
