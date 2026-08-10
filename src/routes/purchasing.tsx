@@ -172,7 +172,7 @@ function PurchasingPage() {
           <EmptyState
             icon={ClipboardList}
             title="No purchase orders yet"
-            description="Create an order from a supplier above to get started."
+            body="Create an order from a supplier above to get started."
           />
         ) : (
           <Table>
