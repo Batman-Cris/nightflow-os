@@ -1,6 +1,15 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Banknote, CreditCard, Minus, Plus, QrCode, Search, ShoppingCart, Trash2 } from "lucide-react";
+import {
+  Banknote,
+  CreditCard,
+  Minus,
+  Plus,
+  QrCode,
+  Search,
+  ShoppingCart,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/layout/app-shell";
@@ -15,7 +24,9 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { currency, posCategories, products } from "@/data/demo";
+import { currency, posCategories } from "@/data/demo";
+import { useStock } from "@/contexts/stock-context";
+import { useCash } from "@/contexts/cash-context";
 
 export const Route = createFileRoute("/pos")({
   head: () => ({
@@ -23,7 +34,8 @@ export const Route = createFileRoute("/pos")({
       { title: "POS — NOX OS" },
       {
         name: "description",
-        content: "A bar-speed point of sale: big product cards, instant cart and four payment methods.",
+        content:
+          "A bar-speed point of sale: big product cards, instant cart and four payment methods.",
       },
       { property: "og:title", content: "POS — NOX OS" },
       { property: "og:description", content: "Bar-speed point of sale for busy nights." },
@@ -39,7 +51,11 @@ const methods = [
   { key: "QR", icon: QrCode },
 ] as const;
 
+const CASHIER = "Paula Nieves";
+
 function PosPage() {
+  const { products, availableStock, canFulfill, sell, recordSale } = useStock();
+  const { logSale } = useCash();
   const [category, setCategory] = useState("All");
   const [query, setQuery] = useState("");
   const [cart, setCart] = useState<Record<string, number>>({ p04: 2, p03: 1 });
@@ -47,21 +63,31 @@ function PosPage() {
 
   const visible = products.filter(
     (p) =>
+      p.category !== "Ingredients" &&
       (category === "All" || p.category === category) &&
       p.name.toLowerCase().includes(query.toLowerCase()),
   );
+  const sellableCategories = posCategories.filter((c) => c !== "Ingredients");
 
   const lines = useMemo(
     () =>
       Object.entries(cart)
         .map(([id, qty]) => ({ product: products.find((p) => p.id === id)!, qty }))
         .filter((l) => l.product),
-    [cart],
+    [cart, products],
   );
   const subtotal = lines.reduce((s, l) => s + l.product.price * l.qty, 0);
   const tax = subtotal * 0.21;
 
-  const add = (id: string) => setCart((c) => ({ ...c, [id]: (c[id] ?? 0) + 1 }));
+  const add = (id: string) =>
+    setCart((c) => {
+      const nextQty = (c[id] ?? 0) + 1;
+      if (!canFulfill(id, nextQty)) {
+        toast.error("Out of stock — can't add more of this item.");
+        return c;
+      }
+      return { ...c, [id]: nextQty };
+    });
   const remove = (id: string) =>
     setCart((c) => {
       const next = { ...c };
@@ -70,6 +96,40 @@ function PosPage() {
       else next[id] = qty;
       return next;
     });
+
+  const confirmPayment = (method: string) => {
+    const result = sell(
+      lines.map((l) => ({ productId: l.product.id, qty: l.qty })),
+      CASHIER,
+    );
+    setPayOpen(false);
+    if (result.success) {
+      const total = Math.round(subtotal + tax);
+      recordSale({
+        time: new Date().toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        }),
+        channel: "POS",
+        items: lines.reduce((s, l) => s + l.qty, 0),
+        total,
+        method: method as "Cash" | "Card" | "Transfer" | "QR",
+        cashier: CASHIER,
+      });
+      logSale(total, method as "Cash" | "Card" | "Transfer" | "QR", CASHIER);
+      setCart({});
+      toast.success(`Payment of ${currency(subtotal + tax)} accepted via ${method}.`);
+    } else {
+      const detail = result.blocked
+        .map((id) => {
+          const name = products.find((p) => p.id === id)?.name ?? id;
+          return `${name} (${result.reasons[id] ?? "out of stock"})`;
+        })
+        .join(", ");
+      toast.error(`Couldn't complete the sale — ${detail}. Adjust the order and retry.`);
+    }
+  };
 
   return (
     <AppShell
@@ -92,7 +152,7 @@ function PosPage() {
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2">
-            {posCategories.map((c) => (
+            {sellableCategories.map((c) => (
               <button
                 key={c}
                 onClick={() => setCategory(c)}
@@ -109,26 +169,49 @@ function PosPage() {
           </div>
 
           <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {visible.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => add(p.id)}
-                className="surface-card group p-5 text-left transition-all duration-200 hover:-translate-y-1 hover:glow-ring"
-              >
-                <div className="flex items-start justify-between">
-                  <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                    {p.category}
-                  </span>
-                  <span className="grid size-7 place-items-center rounded-lg bg-primary/10 text-primary opacity-0 transition-opacity group-hover:opacity-100">
-                    <Plus className="size-4" />
-                  </span>
-                </div>
-                <p className="mt-6 text-base font-semibold leading-tight">{p.name}</p>
-                <p className="mt-1 font-display text-2xl font-bold text-primary">
-                  {currency(p.price)}
-                </p>
-              </button>
-            ))}
+            {visible.map((p) => {
+              const inCart = cart[p.id] ?? 0;
+              const outOfStock = !canFulfill(p.id, inCart + 1);
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => add(p.id)}
+                  disabled={outOfStock}
+                  className={cn(
+                    "surface-card group p-5 text-left transition-all duration-200",
+                    outOfStock
+                      ? "cursor-not-allowed opacity-40 saturate-0"
+                      : "hover:-translate-y-1 hover:glow-ring",
+                  )}
+                >
+                  <div className="flex items-start justify-between">
+                    <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                      {p.category}
+                    </span>
+                    {!outOfStock && (
+                      <span className="grid size-7 place-items-center rounded-lg bg-primary/10 text-primary opacity-0 transition-opacity group-hover:opacity-100">
+                        <Plus className="size-4" />
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-6 text-base font-semibold leading-tight">{p.name}</p>
+                  {outOfStock ? (
+                    <span className="mt-1 inline-block">
+                      <Pill tone="danger">Out of stock</Pill>
+                    </span>
+                  ) : (
+                    <p className="mt-1 font-display text-2xl font-bold text-primary">
+                      {currency(p.price)}
+                    </p>
+                  )}
+                  {p.minStock > 0 && !outOfStock && availableStock(p.id) <= p.minStock && (
+                    <p className="mt-1 text-[11px] font-medium text-warning">
+                      Only {availableStock(p.id)} left
+                    </p>
+                  )}
+                </button>
+              );
+            })}
           </div>
 
           {visible.length === 0 && (
@@ -161,17 +244,30 @@ function PosPage() {
               </p>
             )}
             {lines.map((l) => (
-              <div key={l.product.id} className="flex items-center gap-3 rounded-lg border border-border p-2.5">
+              <div
+                key={l.product.id}
+                className="flex items-center gap-3 rounded-lg border border-border p-2.5"
+              >
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{l.product.name}</p>
                   <p className="text-xs text-muted-foreground">{currency(l.product.price)} each</p>
                 </div>
                 <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="icon" className="size-7" onClick={() => remove(l.product.id)}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-7"
+                    onClick={() => remove(l.product.id)}
+                  >
                     <Minus className="size-3" />
                   </Button>
                   <span className="w-5 text-center text-sm font-semibold">{l.qty}</span>
-                  <Button variant="ghost" size="icon" className="size-7" onClick={() => add(l.product.id)}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-7"
+                    onClick={() => add(l.product.id)}
+                  >
                     <Plus className="size-3" />
                   </Button>
                 </div>
@@ -216,11 +312,7 @@ function PosPage() {
             {methods.map((m) => (
               <button
                 key={m.key}
-                onClick={() => {
-                  setPayOpen(false);
-                  setCart({});
-                  toast.success(`Payment of ${currency(subtotal + tax)} accepted via ${m.key}.`);
-                }}
+                onClick={() => confirmPayment(m.key)}
                 className="flex flex-col items-center gap-2 rounded-xl border border-border p-6 transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:bg-primary/5"
               >
                 <m.icon className="size-6 text-primary" />
