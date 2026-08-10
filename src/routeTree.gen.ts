@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AccessControlRouteImport } from './routes/access-control'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
+import { Route as CashRegisterRouteImport } from './routes/cash-register'
 import { Route as CustomersRouteImport } from './routes/customers'
 import { Route as EmployeesRouteImport } from './routes/employees'
 import { Route as EventsRouteImport } from './routes/events'
@@ -20,6 +21,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as PosRouteImport } from './routes/pos'
 import { Route as ProductsRouteImport } from './routes/products'
 import { Route as PromotersRouteImport } from './routes/promoters'
+import { Route as RecipesRouteImport } from './routes/recipes'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as SalesRouteImport } from './routes/sales'
 import { Route as SettingsRouteImport } from './routes/settings'
@@ -39,6 +41,11 @@ const AccessControlRoute = AccessControlRouteImport.update({
 const AnalyticsRoute = AnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CashRegisterRoute = CashRegisterRouteImport.update({
+  id: '/cash-register',
+  path: '/cash-register',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CustomersRoute = CustomersRouteImport.update({
@@ -81,6 +88,11 @@ const PromotersRoute = PromotersRouteImport.update({
   path: '/promoters',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RecipesRoute = RecipesRouteImport.update({
+  id: '/recipes',
+  path: '/recipes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ReportsRoute = ReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
@@ -111,6 +123,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/access-control': typeof AccessControlRoute
   '/analytics': typeof AnalyticsRoute
+  '/cash-register': typeof CashRegisterRoute
   '/customers': typeof CustomersRoute
   '/employees': typeof EmployeesRoute
   '/events': typeof EventsRoute
@@ -119,6 +132,7 @@ export interface FileRoutesByFullPath {
   '/pos': typeof PosRoute
   '/products': typeof ProductsRoute
   '/promoters': typeof PromotersRoute
+  '/recipes': typeof RecipesRoute
   '/reports': typeof ReportsRoute
   '/sales': typeof SalesRoute
   '/settings': typeof SettingsRoute
@@ -129,6 +143,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/access-control': typeof AccessControlRoute
   '/analytics': typeof AnalyticsRoute
+  '/cash-register': typeof CashRegisterRoute
   '/customers': typeof CustomersRoute
   '/employees': typeof EmployeesRoute
   '/events': typeof EventsRoute
@@ -137,6 +152,7 @@ export interface FileRoutesByTo {
   '/pos': typeof PosRoute
   '/products': typeof ProductsRoute
   '/promoters': typeof PromotersRoute
+  '/recipes': typeof RecipesRoute
   '/reports': typeof ReportsRoute
   '/sales': typeof SalesRoute
   '/settings': typeof SettingsRoute
@@ -148,6 +164,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/access-control': typeof AccessControlRoute
   '/analytics': typeof AnalyticsRoute
+  '/cash-register': typeof CashRegisterRoute
   '/customers': typeof CustomersRoute
   '/employees': typeof EmployeesRoute
   '/events': typeof EventsRoute
@@ -156,6 +173,7 @@ export interface FileRoutesById {
   '/pos': typeof PosRoute
   '/products': typeof ProductsRoute
   '/promoters': typeof PromotersRoute
+  '/recipes': typeof RecipesRoute
   '/reports': typeof ReportsRoute
   '/sales': typeof SalesRoute
   '/settings': typeof SettingsRoute
@@ -168,6 +186,7 @@ export interface FileRouteTypes {
     | '/'
     | '/access-control'
     | '/analytics'
+    | '/cash-register'
     | '/customers'
     | '/employees'
     | '/events'
@@ -176,6 +195,7 @@ export interface FileRouteTypes {
     | '/pos'
     | '/products'
     | '/promoters'
+    | '/recipes'
     | '/reports'
     | '/sales'
     | '/settings'
@@ -186,6 +206,7 @@ export interface FileRouteTypes {
     | '/'
     | '/access-control'
     | '/analytics'
+    | '/cash-register'
     | '/customers'
     | '/employees'
     | '/events'
@@ -194,6 +215,7 @@ export interface FileRouteTypes {
     | '/pos'
     | '/products'
     | '/promoters'
+    | '/recipes'
     | '/reports'
     | '/sales'
     | '/settings'
@@ -204,6 +226,7 @@ export interface FileRouteTypes {
     | '/'
     | '/access-control'
     | '/analytics'
+    | '/cash-register'
     | '/customers'
     | '/employees'
     | '/events'
@@ -212,6 +235,7 @@ export interface FileRouteTypes {
     | '/pos'
     | '/products'
     | '/promoters'
+    | '/recipes'
     | '/reports'
     | '/sales'
     | '/settings'
@@ -223,6 +247,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AccessControlRoute: typeof AccessControlRoute
   AnalyticsRoute: typeof AnalyticsRoute
+  CashRegisterRoute: typeof CashRegisterRoute
   CustomersRoute: typeof CustomersRoute
   EmployeesRoute: typeof EmployeesRoute
   EventsRoute: typeof EventsRoute
@@ -231,6 +256,7 @@ export interface RootRouteChildren {
   PosRoute: typeof PosRoute
   ProductsRoute: typeof ProductsRoute
   PromotersRoute: typeof PromotersRoute
+  RecipesRoute: typeof RecipesRoute
   ReportsRoute: typeof ReportsRoute
   SalesRoute: typeof SalesRoute
   SettingsRoute: typeof SettingsRoute
@@ -259,6 +285,13 @@ declare module '@tanstack/react-router' {
       path: '/analytics'
       fullPath: '/analytics'
       preLoaderRoute: typeof AnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cash-register': {
+      id: '/cash-register'
+      path: '/cash-register'
+      fullPath: '/cash-register'
+      preLoaderRoute: typeof CashRegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/customers': {
@@ -317,6 +350,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PromotersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/recipes': {
+      id: '/recipes'
+      path: '/recipes'
+      fullPath: '/recipes'
+      preLoaderRoute: typeof RecipesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reports': {
       id: '/reports'
       path: '/reports'
@@ -359,6 +399,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AccessControlRoute: AccessControlRoute,
   AnalyticsRoute: AnalyticsRoute,
+  CashRegisterRoute: CashRegisterRoute,
   CustomersRoute: CustomersRoute,
   EmployeesRoute: EmployeesRoute,
   EventsRoute: EventsRoute,
@@ -367,6 +408,7 @@ const rootRouteChildren: RootRouteChildren = {
   PosRoute: PosRoute,
   ProductsRoute: ProductsRoute,
   PromotersRoute: PromotersRoute,
+  RecipesRoute: RecipesRoute,
   ReportsRoute: ReportsRoute,
   SalesRoute: SalesRoute,
   SettingsRoute: SettingsRoute,
@@ -376,3 +418,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
