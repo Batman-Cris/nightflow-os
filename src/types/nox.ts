@@ -96,3 +96,18 @@ export type Sale = {
   method: "Cash" | "Card" | "Transfer" | "QR";
   cashier: string;
 };
+
+export type RecipeIngredient = {
+  /** id of the raw-stock Product consumed by this ingredient line */
+  productId: string;
+  /** quantity consumed per one unit of the finished product sold (same unit as the ingredient's stock) */
+  qty: number;
+  unit: string;
+};
+
+export type Recipe = {
+  id: string;
+  /** id of the finished, sellable Product this recipe produces (e.g. the cocktail) */
+  productId: string;
+  ingredients: RecipeIngredient[];
+};
