@@ -14,7 +14,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { currency, sales, salesPerHour } from "@/data/demo";
+import { currency, salesPerHour } from "@/data/demo";
+import { useStock } from "@/contexts/stock-context";
 
 export const Route = createFileRoute("/sales")({
   head: () => ({
@@ -25,13 +26,17 @@ export const Route = createFileRoute("/sales")({
         content: "Every transaction across bar, door, VIP and online, with live hourly revenue.",
       },
       { property: "og:title", content: "Sales — NOX OS" },
-      { property: "og:description", content: "Live transactions across bar, door, VIP and online." },
+      {
+        property: "og:description",
+        content: "Live transactions across bar, door, VIP and online.",
+      },
     ],
   }),
   component: SalesPage,
 });
 
 function SalesPage() {
+  const { sales } = useStock();
   const [query, setQuery] = useState("");
   const rows = sales.filter(
     (s) =>
@@ -39,13 +44,34 @@ function SalesPage() {
       s.channel.toLowerCase().includes(query.toLowerCase()),
   );
 
+  const gross = sales.reduce((s, sale) => s + sale.total, 0);
+  const cardVolume = sales
+    .filter((s) => s.method === "Card" || s.method === "Transfer")
+    .reduce((s, sale) => s + sale.total, 0);
+  const cashVolume = sales
+    .filter((s) => s.method === "Cash")
+    .reduce((s, sale) => s + sale.total, 0);
+  const pct = (n: number) => (gross > 0 ? `${((n / gross) * 100).toFixed(1)}% of total` : "");
+
   return (
     <AppShell title="Sales" description="Live transaction stream for tonight's operation.">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Gross sales" value={currency(58400)} delta={18.4} icon={DollarSign} />
-        <StatCard label="Card volume" value={currency(41200)} delta={22.1} icon={CreditCard} hint="70.5% of total" />
-        <StatCard label="Cash volume" value={currency(9800)} delta={-6.2} icon={Wallet} hint="16.8% of total" />
-        <StatCard label="Transactions" value="1,482" delta={9.4} icon={Receipt} />
+        <StatCard label="Gross sales" value={currency(gross)} delta={18.4} icon={DollarSign} />
+        <StatCard
+          label="Card volume"
+          value={currency(cardVolume)}
+          delta={22.1}
+          icon={CreditCard}
+          hint={pct(cardVolume)}
+        />
+        <StatCard
+          label="Cash volume"
+          value={currency(cashVolume)}
+          delta={-6.2}
+          icon={Wallet}
+          hint={pct(cashVolume)}
+        />
+        <StatCard label="Transactions" value={String(sales.length)} delta={9.4} icon={Receipt} />
       </div>
 
       <Panel className="mt-6" title="Revenue by hour" subtitle="Bar, door and VIP combined">
