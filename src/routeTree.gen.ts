@@ -21,6 +21,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as PosRouteImport } from './routes/pos'
 import { Route as ProductsRouteImport } from './routes/products'
 import { Route as PromotersRouteImport } from './routes/promoters'
+import { Route as PurchasingRouteImport } from './routes/purchasing'
 import { Route as RecipesRouteImport } from './routes/recipes'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as SalesRouteImport } from './routes/sales'
@@ -88,6 +89,11 @@ const PromotersRoute = PromotersRouteImport.update({
   path: '/promoters',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PurchasingRoute = PurchasingRouteImport.update({
+  id: '/purchasing',
+  path: '/purchasing',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RecipesRoute = RecipesRouteImport.update({
   id: '/recipes',
   path: '/recipes',
@@ -132,6 +138,7 @@ export interface FileRoutesByFullPath {
   '/pos': typeof PosRoute
   '/products': typeof ProductsRoute
   '/promoters': typeof PromotersRoute
+  '/purchasing': typeof PurchasingRoute
   '/recipes': typeof RecipesRoute
   '/reports': typeof ReportsRoute
   '/sales': typeof SalesRoute
@@ -152,6 +159,7 @@ export interface FileRoutesByTo {
   '/pos': typeof PosRoute
   '/products': typeof ProductsRoute
   '/promoters': typeof PromotersRoute
+  '/purchasing': typeof PurchasingRoute
   '/recipes': typeof RecipesRoute
   '/reports': typeof ReportsRoute
   '/sales': typeof SalesRoute
@@ -173,6 +181,7 @@ export interface FileRoutesById {
   '/pos': typeof PosRoute
   '/products': typeof ProductsRoute
   '/promoters': typeof PromotersRoute
+  '/purchasing': typeof PurchasingRoute
   '/recipes': typeof RecipesRoute
   '/reports': typeof ReportsRoute
   '/sales': typeof SalesRoute
@@ -195,6 +204,7 @@ export interface FileRouteTypes {
     | '/pos'
     | '/products'
     | '/promoters'
+    | '/purchasing'
     | '/recipes'
     | '/reports'
     | '/sales'
@@ -215,6 +225,7 @@ export interface FileRouteTypes {
     | '/pos'
     | '/products'
     | '/promoters'
+    | '/purchasing'
     | '/recipes'
     | '/reports'
     | '/sales'
@@ -235,6 +246,7 @@ export interface FileRouteTypes {
     | '/pos'
     | '/products'
     | '/promoters'
+    | '/purchasing'
     | '/recipes'
     | '/reports'
     | '/sales'
@@ -256,6 +268,7 @@ export interface RootRouteChildren {
   PosRoute: typeof PosRoute
   ProductsRoute: typeof ProductsRoute
   PromotersRoute: typeof PromotersRoute
+  PurchasingRoute: typeof PurchasingRoute
   RecipesRoute: typeof RecipesRoute
   ReportsRoute: typeof ReportsRoute
   SalesRoute: typeof SalesRoute
@@ -350,6 +363,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PromotersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/purchasing': {
+      id: '/purchasing'
+      path: '/purchasing'
+      fullPath: '/purchasing'
+      preLoaderRoute: typeof PurchasingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/recipes': {
       id: '/recipes'
       path: '/recipes'
@@ -408,6 +428,7 @@ const rootRouteChildren: RootRouteChildren = {
   PosRoute: PosRoute,
   ProductsRoute: ProductsRoute,
   PromotersRoute: PromotersRoute,
+  PurchasingRoute: PurchasingRoute,
   RecipesRoute: RecipesRoute,
   ReportsRoute: ReportsRoute,
   SalesRoute: SalesRoute,
@@ -418,13 +439,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
