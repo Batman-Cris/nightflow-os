@@ -16,7 +16,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { currency, tickets as seed } from "@/data/demo";
+import { currency } from "@/data/demo";
+import { useTickets } from "@/contexts/tickets-context";
 import type { TicketStatus } from "@/types/nox";
 
 export const Route = createFileRoute("/tickets")({
@@ -42,7 +43,7 @@ const tone: Record<TicketStatus, "success" | "primary" | "muted" | "danger"> = {
 };
 
 function TicketsPage() {
-  const [rows, setRows] = useState(seed);
+  const { tickets: rows, checkIn } = useTickets();
   const [tab, setTab] = useState("all");
   const [query, setQuery] = useState("");
 
@@ -54,22 +55,28 @@ function TicketsPage() {
   );
 
   const revenue = rows.reduce((s, t) => s + t.price, 0);
+  const checkedIn = rows.filter((t) => t.status === "checked-in").length;
+  const vipCount = rows.filter((t) => t.tier === "VIP" || t.tier === "Backstage").length;
 
   return (
     <AppShell
       title="Tickets"
       description="Sold tickets, tiers and door validation status."
       actions={
-        <Button size="sm" variant="outline" onClick={() => toast.success("Ticket list exported as CSV.")}>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => toast.success("Ticket list exported as CSV.")}
+        >
           Export list
         </Button>
       }
     >
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Tickets issued" value={String(rows.length * 42)} delta={11.3} icon={TicketIcon} />
-        <StatCard label="Checked in" value="1,147" delta={6.8} icon={QrCode} hint="tonight" />
-        <StatCard label="VIP tickets" value={String(rows.filter((t) => t.tier === "VIP").length * 9)} icon={TicketIcon} />
-        <StatCard label="Ticket revenue" value={currency(revenue * 38)} delta={17.2} icon={TicketIcon} />
+        <StatCard label="Tickets issued" value={String(rows.length)} icon={TicketIcon} />
+        <StatCard label="Checked in" value={String(checkedIn)} icon={QrCode} hint="tonight" />
+        <StatCard label="VIP tickets" value={String(vipCount)} icon={TicketIcon} />
+        <StatCard label="Ticket revenue" value={currency(revenue)} icon={TicketIcon} />
       </div>
 
       <Panel
@@ -141,11 +148,13 @@ function TicketsPage() {
                     variant="ghost"
                     size="sm"
                     disabled={t.status !== "valid"}
-                    onClick={() => {
-                      setRows((r) =>
-                        r.map((x) => (x.id === t.id ? { ...x, status: "checked-in" as const } : x)),
-                      );
-                      toast.success(`${t.holder} checked in.`);
+                    onClick={async () => {
+                      const outcome = await checkIn(t.code, "Manual — Tickets");
+                      if (outcome.outcome !== "invalid" && outcome.outcome !== "used") {
+                        toast.success(`${t.holder} checked in.`);
+                      } else {
+                        toast.error(outcome.detail);
+                      }
                     }}
                   >
                     Validate
