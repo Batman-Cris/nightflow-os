@@ -167,7 +167,7 @@ async function fetchPurchaseOrders(): Promise<PurchaseOrder[]> {
       supplier: o.supplier,
       status: o.status as PurchaseOrderStatus,
       createdAt: o.created_at,
-      receivedAt: o.received_at ?? undefined,
+      ...(o.received_at ? { receivedAt: o.received_at } : {}),
       lines: (lines ?? [])
         .filter((l) => l.order_id === o.id)
         .map((l) => ({ productId: l.product_id, qty: l.qty, unitCost: Number(l.unit_cost) })),
