@@ -1,6 +1,15 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 
-import { products as demoProducts, recipes as demoRecipes, sales as demoSales } from "@/data/demo";
+import { supabase } from "@/integrations/supabase/client";
 import type { Product, Recipe, Sale } from "@/types/nox";
 
 export type MovementType = "Sale" | "Recipe" | "Restock" | "Breakage";
@@ -13,31 +22,6 @@ export type StockMovement = {
   qty: number;
   user: string;
 };
-
-const INITIAL_MOVEMENTS: StockMovement[] = [
-  { id: "m1", time: "01:38", item: "Corona 355ml", type: "Sale", qty: -12, user: "Rafa Molina" },
-  { id: "m2", time: "01:20", item: "Grey Goose Bottle", type: "Sale", qty: -1, user: "Lucía Prat" },
-  { id: "m3", time: "00:55", item: "Red Bull", type: "Sale", qty: -18, user: "Sol Vergara" },
-  { id: "m4", time: "00:32", item: "Moët & Chandon", type: "Sale", qty: -2, user: "Lucía Prat" },
-  { id: "m5", time: "23:10", item: "Corona 355ml", type: "Restock", qty: 240, user: "Franco Lema" },
-  {
-    id: "m6",
-    time: "22:44",
-    item: "Absolut Vodka",
-    type: "Breakage",
-    qty: -1,
-    user: "Franco Lema",
-  },
-  {
-    id: "m7",
-    time: "20:05",
-    item: "Sparkling Water",
-    type: "Restock",
-    qty: 180,
-    user: "Franco Lema",
-  },
-  { id: "m8", time: "19:40", item: "Truffle Fries", type: "Restock", qty: 60, user: "Cocina NOX" },
-];
 
 export type SaleLine = { productId: string; qty: number };
 
@@ -59,26 +43,6 @@ export type PurchaseOrder = {
   lines: PurchaseOrderLine[];
 };
 
-const INITIAL_ORDERS: PurchaseOrder[] = [
-  {
-    id: "po_seed_1",
-    reference: "PO-1041",
-    supplier: "Quilmes SA",
-    status: "sent",
-    createdAt: "Yesterday 18:20",
-    lines: [{ productId: "p05", qty: 240, unitCost: 1.1 }],
-  },
-  {
-    id: "po_seed_2",
-    reference: "PO-1040",
-    supplier: "RB Andina",
-    status: "received",
-    createdAt: "Mon 11:05",
-    receivedAt: "Mon 17:40",
-    lines: [{ productId: "p06", qty: 180, unitCost: 1.4 }],
-  },
-];
-
 export type SellResult = {
   success: boolean;
   /** Finished-product ids that couldn't be sold because a required ingredient/stock ran out. */
@@ -97,7 +61,7 @@ type StockValue = {
   /** How many more units/servings of a product can be sold right now (accounts for recipe ingredients). */
   availableStock: (productId: string) => number;
   canFulfill: (productId: string, qty?: number) => boolean;
-  /** Applies a completed POS sale: decrements ingredient/product stock, logs movements, bumps `sold`. Pure — safe to call once per checkout. */
+  /** Applies a completed POS sale: decrements ingredient/product stock, logs movements, bumps `sold`. */
   sell: (lines: SaleLine[], cashier: string) => SellResult;
   /** Logs a completed transaction for the Sales feed — call after a successful `sell()`. */
   recordSale: (sale: Omit<Sale, "id">) => void;
@@ -118,12 +82,152 @@ const nowLabel = () =>
 
 const uid = (prefix: string) => `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 
+const logError = (label: string, error: unknown) => {
+  if (error) console.error(`[stock] ${label}`, error);
+};
+
+async function fetchProducts(): Promise<Product[]> {
+  const { data, error } = await supabase.from("products").select("*").order("id");
+  logError("products", error);
+  return (data ?? []).map((r) => ({
+    id: r.id,
+    name: r.name,
+    category: r.category,
+    supplier: r.supplier,
+    cost: Number(r.cost),
+    price: Number(r.price),
+    stock: r.stock,
+    minStock: r.min_stock,
+    sold: r.sold,
+  }));
+}
+
+async function fetchMovements(): Promise<StockMovement[]> {
+  const { data, error } = await supabase
+    .from("stock_movements")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(200);
+  logError("stock_movements", error);
+  return (data ?? []).map((r) => ({
+    id: r.id,
+    time: r.time,
+    item: r.item,
+    type: r.type as MovementType,
+    qty: r.qty,
+    user: r.user,
+  }));
+}
+
+async function fetchSales(): Promise<Sale[]> {
+  const { data, error } = await supabase
+    .from("sales")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(200);
+  logError("sales", error);
+  return (data ?? []).map((r) => ({
+    id: r.id,
+    time: r.time,
+    channel: r.channel as Sale["channel"],
+    items: r.items,
+    total: Number(r.total),
+    method: r.method as Sale["method"],
+    cashier: r.cashier,
+  }));
+}
+
+async function fetchRecipes(): Promise<Recipe[]> {
+  const [{ data: rows, error }, { data: ing, error: ingError }] = await Promise.all([
+    supabase.from("recipes").select("*"),
+    supabase.from("recipe_ingredients").select("*"),
+  ]);
+  logError("recipes", error);
+  logError("recipe_ingredients", ingError);
+  return (rows ?? []).map((r) => ({
+    id: r.id,
+    productId: r.product_id,
+    ingredients: (ing ?? [])
+      .filter((i) => i.recipe_id === r.id)
+      .map((i) => ({ productId: i.product_id, qty: Number(i.qty), unit: i.unit })),
+  }));
+}
+
+async function fetchPurchaseOrders(): Promise<PurchaseOrder[]> {
+  const [{ data: rows, error }, { data: lines, error: linesError }] = await Promise.all([
+    supabase.from("purchase_orders").select("*"),
+    supabase.from("purchase_order_lines").select("*"),
+  ]);
+  logError("purchase_orders", error);
+  logError("purchase_order_lines", linesError);
+  return (rows ?? [])
+    .map((o) => ({
+      id: o.id,
+      reference: o.reference,
+      supplier: o.supplier,
+      status: o.status as PurchaseOrderStatus,
+      createdAt: o.created_at,
+      receivedAt: o.received_at ?? undefined,
+      lines: (lines ?? [])
+        .filter((l) => l.order_id === o.id)
+        .map((l) => ({ productId: l.product_id, qty: l.qty, unitCost: Number(l.unit_cost) })),
+    }))
+    .sort((a, b) => b.reference.localeCompare(a.reference));
+}
+
 export function StockProvider({ children }: { children: ReactNode }) {
-  const [products, setProducts] = useState<Product[]>(demoProducts);
-  const [movements, setMovements] = useState<StockMovement[]>(INITIAL_MOVEMENTS);
-  const [recipes, setRecipes] = useState<Recipe[]>(demoRecipes);
-  const [sales, setSales] = useState<Sale[]>(demoSales);
-  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>(INITIAL_ORDERS);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [movements, setMovements] = useState<StockMovement[]>([]);
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [sales, setSales] = useState<Sale[]>([]);
+  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
+
+  const reloadProducts = useCallback(async () => setProducts(await fetchProducts()), []);
+  const reloadMovements = useCallback(async () => setMovements(await fetchMovements()), []);
+  const reloadSales = useCallback(async () => setSales(await fetchSales()), []);
+  const reloadRecipes = useCallback(async () => setRecipes(await fetchRecipes()), []);
+  const reloadOrders = useCallback(async () => setPurchaseOrders(await fetchPurchaseOrders()), []);
+
+  useEffect(() => {
+    void reloadProducts();
+    void reloadMovements();
+    void reloadSales();
+    void reloadRecipes();
+    void reloadOrders();
+
+    const channel = supabase
+      .channel("nox-stock")
+      .on("postgres_changes", { event: "*", schema: "public", table: "products" }, () => {
+        void reloadProducts();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "stock_movements" }, () => {
+        void reloadMovements();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "sales" }, () => {
+        void reloadSales();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "recipes" }, () => {
+        void reloadRecipes();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "recipe_ingredients" }, () => {
+        void reloadRecipes();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "purchase_orders" }, () => {
+        void reloadOrders();
+      })
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "purchase_order_lines" },
+        () => {
+          void reloadOrders();
+        },
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [reloadProducts, reloadMovements, reloadSales, reloadRecipes, reloadOrders]);
 
   const recipeFor = useCallback(
     (productId: string) => recipes.find((r) => r.productId === productId),
@@ -159,12 +263,14 @@ export function StockProvider({ children }: { children: ReactNode }) {
     [availableStock],
   );
 
+  const productsRef = useRef(products);
+  productsRef.current = products;
+
   const sell = useCallback(
     (lines: SaleLine[], cashier: string): SellResult => {
+      const snapshot = productsRef.current;
       const time = nowLabel();
-      // Pure simulation over a plain snapshot — no mutation of React state during the pass,
-      // so this stays correct even if the updater were ever invoked more than once.
-      const stockById = new Map(products.map((p) => [p.id, p.stock]));
+      const stockById = new Map(snapshot.map((p) => [p.id, p.stock]));
       const soldById = new Map<string, number>();
       const newMovements: StockMovement[] = [];
       const blocked: string[] = [];
@@ -172,27 +278,27 @@ export function StockProvider({ children }: { children: ReactNode }) {
 
       for (const line of lines) {
         if (line.qty <= 0) continue;
-        const product = products.find((p) => p.id === line.productId);
+        const product = snapshot.find((p) => p.id === line.productId);
         if (!product) continue;
 
         const recipe = recipeFor(product.id);
 
         if (recipe) {
           const shortage = recipe.ingredients.find((ing) => {
-            const ingredient = products.find((p) => p.id === ing.productId);
+            const ingredient = snapshot.find((p) => p.id === ing.productId);
             if (!ingredient || ingredient.minStock === 0) return false;
             const have = stockById.get(ing.productId) ?? 0;
             return have < ing.qty * line.qty;
           });
           if (shortage) {
             const ingredientName =
-              products.find((p) => p.id === shortage.productId)?.name ?? "an ingredient";
+              snapshot.find((p) => p.id === shortage.productId)?.name ?? "an ingredient";
             blocked.push(product.id);
             reasons[product.id] = `Not enough ${ingredientName} in stock`;
             continue;
           }
           for (const ing of recipe.ingredients) {
-            const ingredient = products.find((p) => p.id === ing.productId);
+            const ingredient = snapshot.find((p) => p.id === ing.productId);
             if (!ingredient || ingredient.minStock === 0) continue;
             const used = ing.qty * line.qty;
             stockById.set(ing.productId, (stockById.get(ing.productId) ?? 0) - used);
@@ -226,82 +332,211 @@ export function StockProvider({ children }: { children: ReactNode }) {
         soldById.set(product.id, (soldById.get(product.id) ?? 0) + line.qty);
       }
 
-      if (newMovements.length > 0 || soldById.size > 0) {
-        setProducts((prev) =>
-          prev.map((p) => ({
-            ...p,
-            stock: stockById.has(p.id) ? Math.max(stockById.get(p.id)!, 0) : p.stock,
+      const touched = snapshot.filter((p) => soldById.has(p.id) || stockById.get(p.id) !== p.stock);
+      const nextById = new Map(
+        touched.map((p) => [
+          p.id,
+          {
+            stock: Math.max(stockById.get(p.id) ?? p.stock, 0),
             sold: p.sold + (soldById.get(p.id) ?? 0),
-          })),
+          },
+        ]),
+      );
+
+      if (touched.length > 0) {
+        // Optimistic local update; realtime + refetch reconcile with the database.
+        setProducts((prev) =>
+          prev.map((p) => (nextById.has(p.id) ? { ...p, ...nextById.get(p.id)! } : p)),
         );
       }
-      if (newMovements.length > 0) {
-        setMovements((prev) => [...newMovements, ...prev]);
-      }
+      if (newMovements.length > 0) setMovements((prev) => [...newMovements, ...prev]);
+
+      void (async () => {
+        for (const [id, next] of nextById) {
+          const { error } = await supabase.from("products").update(next).eq("id", id);
+          logError("update product", error);
+        }
+        if (newMovements.length > 0) {
+          const { error } = await supabase.from("stock_movements").insert(
+            newMovements.map((m) => ({
+              id: m.id,
+              time: m.time,
+              item: m.item,
+              type: m.type,
+              qty: m.qty,
+              user: m.user,
+            })),
+          );
+          logError("insert movements", error);
+        }
+        await reloadProducts();
+        await reloadMovements();
+      })();
 
       return { success: blocked.length === 0, blocked, reasons };
     },
-    [products, recipeFor],
+    [recipeFor, reloadProducts, reloadMovements],
   );
 
-  const addRecipe = useCallback((recipe: Omit<Recipe, "id">) => {
-    setRecipes((prev) => [...prev, { ...recipe, id: uid("r") }]);
-  }, []);
+  const addRecipe = useCallback(
+    (recipe: Omit<Recipe, "id">) => {
+      const id = uid("r");
+      setRecipes((prev) => [...prev, { ...recipe, id }]);
+      void (async () => {
+        const { error } = await supabase
+          .from("recipes")
+          .insert({ id, product_id: recipe.productId });
+        logError("insert recipe", error);
+        if (recipe.ingredients.length > 0) {
+          const { error: ingError } = await supabase.from("recipe_ingredients").insert(
+            recipe.ingredients.map((i) => ({
+              recipe_id: id,
+              product_id: i.productId,
+              qty: i.qty,
+              unit: i.unit,
+            })),
+          );
+          logError("insert recipe ingredients", ingError);
+        }
+        await reloadRecipes();
+      })();
+    },
+    [reloadRecipes],
+  );
 
-  const createPurchaseOrder = useCallback((supplier: string, lines: PurchaseOrderLine[]) => {
-    const order: PurchaseOrder = {
-      id: uid("po"),
-      reference: `PO-${Math.floor(1100 + Math.random() * 800)}`,
-      supplier,
-      status: "draft",
-      createdAt: `Today ${nowLabel()}`,
-      lines: lines.filter((l) => l.qty > 0),
-    };
-    setPurchaseOrders((prev) => [order, ...prev]);
-    return order;
-  }, []);
+  const createPurchaseOrder = useCallback(
+    (supplier: string, lines: PurchaseOrderLine[]) => {
+      const order: PurchaseOrder = {
+        id: uid("po"),
+        reference: `PO-${Math.floor(1100 + Math.random() * 800)}`,
+        supplier,
+        status: "draft",
+        createdAt: `Today ${nowLabel()}`,
+        lines: lines.filter((l) => l.qty > 0),
+      };
+      setPurchaseOrders((prev) => [order, ...prev]);
+      void (async () => {
+        const { error } = await supabase.from("purchase_orders").insert({
+          id: order.id,
+          reference: order.reference,
+          supplier: order.supplier,
+          status: order.status,
+          created_at: order.createdAt,
+        });
+        logError("insert purchase order", error);
+        if (order.lines.length > 0) {
+          const { error: linesError } = await supabase.from("purchase_order_lines").insert(
+            order.lines.map((l) => ({
+              order_id: order.id,
+              product_id: l.productId,
+              qty: l.qty,
+              unit_cost: l.unitCost,
+            })),
+          );
+          logError("insert purchase order lines", linesError);
+        }
+        await reloadOrders();
+      })();
+      return order;
+    },
+    [reloadOrders],
+  );
 
-  const sendPurchaseOrder = useCallback((orderId: string) => {
-    setPurchaseOrders((prev) =>
-      prev.map((o) => (o.id === orderId && o.status === "draft" ? { ...o, status: "sent" } : o)),
-    );
-  }, []);
+  const sendPurchaseOrder = useCallback(
+    (orderId: string) => {
+      setPurchaseOrders((prev) =>
+        prev.map((o) => (o.id === orderId && o.status === "draft" ? { ...o, status: "sent" } : o)),
+      );
+      void (async () => {
+        const { error } = await supabase
+          .from("purchase_orders")
+          .update({ status: "sent" })
+          .eq("id", orderId)
+          .eq("status", "draft");
+        logError("send purchase order", error);
+        await reloadOrders();
+      })();
+    },
+    [reloadOrders],
+  );
+
+  const ordersRef = useRef(purchaseOrders);
+  ordersRef.current = purchaseOrders;
 
   const receivePurchaseOrder = useCallback(
     (orderId: string, user = "Franco Lema") => {
-      const order = purchaseOrders.find((o) => o.id === orderId);
+      const order = ordersRef.current.find((o) => o.id === orderId);
       if (!order || order.status !== "sent") return;
+      const snapshot = productsRef.current;
       const time = nowLabel();
+      const receivedAt = `Today ${time}`;
 
       const received = new Map(order.lines.map((l) => [l.productId, l.qty]));
+      const restocks: StockMovement[] = order.lines.map((line) => ({
+        id: uid(`m_${line.productId}`),
+        time,
+        item: snapshot.find((p) => p.id === line.productId)?.name ?? line.productId,
+        type: "Restock",
+        qty: line.qty,
+        user,
+      }));
+
       setProducts((prev) =>
         prev.map((p) =>
           received.has(p.id) ? { ...p, stock: p.stock + (received.get(p.id) ?? 0) } : p,
         ),
       );
-
-      const restocks: StockMovement[] = order.lines.map((line) => ({
-        id: uid(`m_${line.productId}`),
-        time,
-        item: products.find((p) => p.id === line.productId)?.name ?? line.productId,
-        type: "Restock",
-        qty: line.qty,
-        user,
-      }));
       setMovements((prev) => [...restocks, ...prev]);
-
       setPurchaseOrders((prev) =>
-        prev.map((o) =>
-          o.id === orderId ? { ...o, status: "received", receivedAt: `Today ${time}` } : o,
-        ),
+        prev.map((o) => (o.id === orderId ? { ...o, status: "received", receivedAt } : o)),
       );
+
+      void (async () => {
+        for (const line of order.lines) {
+          const current = snapshot.find((p) => p.id === line.productId);
+          if (!current) continue;
+          const { error } = await supabase
+            .from("products")
+            .update({ stock: current.stock + line.qty })
+            .eq("id", line.productId);
+          logError("restock product", error);
+        }
+        const { error: movementError } = await supabase.from("stock_movements").insert(
+          restocks.map((m) => ({
+            id: m.id,
+            time: m.time,
+            item: m.item,
+            type: m.type,
+            qty: m.qty,
+            user: m.user,
+          })),
+        );
+        logError("insert restock movements", movementError);
+        const { error: orderError } = await supabase
+          .from("purchase_orders")
+          .update({ status: "received", received_at: receivedAt })
+          .eq("id", orderId);
+        logError("receive purchase order", orderError);
+        await reloadProducts();
+        await reloadMovements();
+        await reloadOrders();
+      })();
     },
-    [purchaseOrders, products],
+    [reloadProducts, reloadMovements, reloadOrders],
   );
 
-  const recordSale = useCallback((sale: Omit<Sale, "id">) => {
-    setSales((prev) => [{ ...sale, id: uid("s") }, ...prev]);
-  }, []);
+  const recordSale = useCallback(
+    (sale: Omit<Sale, "id">) => {
+      const id = uid("s");
+      setSales((prev) => [{ ...sale, id }, ...prev]);
+      void (async () => {
+        const { error } = await supabase.from("sales").insert({ id, ...sale });
+        logError("insert sale", error);
+        await reloadSales();
+      })();
+    },
+    [reloadSales],
+  );
 
   const value = useMemo<StockValue>(
     () => ({
