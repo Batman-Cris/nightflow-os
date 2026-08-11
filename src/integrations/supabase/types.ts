@@ -14,7 +14,313 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      cash_entries: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          method: string
+          note: string | null
+          session_id: string
+          time: string
+          type: string
+          user: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id: string
+          method: string
+          note?: string | null
+          session_id: string
+          time: string
+          type: string
+          user: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          method?: string
+          note?: string | null
+          session_id?: string
+          time?: string
+          type?: string
+          user?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cash_entries_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "cash_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cash_sessions: {
+        Row: {
+          closed_at: string | null
+          closed_by: string | null
+          counted_cash: number | null
+          created_at: string
+          id: string
+          opened_at: string | null
+          opened_by: string | null
+          opening_float: number
+          status: string
+        }
+        Insert: {
+          closed_at?: string | null
+          closed_by?: string | null
+          counted_cash?: number | null
+          created_at?: string
+          id: string
+          opened_at?: string | null
+          opened_by?: string | null
+          opening_float?: number
+          status: string
+        }
+        Update: {
+          closed_at?: string | null
+          closed_by?: string | null
+          counted_cash?: number | null
+          created_at?: string
+          id?: string
+          opened_at?: string | null
+          opened_by?: string | null
+          opening_float?: number
+          status?: string
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          category: string
+          cost: number
+          id: string
+          min_stock: number
+          name: string
+          price: number
+          sold: number
+          stock: number
+          supplier: string
+        }
+        Insert: {
+          category: string
+          cost?: number
+          id: string
+          min_stock?: number
+          name: string
+          price?: number
+          sold?: number
+          stock?: number
+          supplier: string
+        }
+        Update: {
+          category?: string
+          cost?: number
+          id?: string
+          min_stock?: number
+          name?: string
+          price?: number
+          sold?: number
+          stock?: number
+          supplier?: string
+        }
+        Relationships: []
+      }
+      purchase_order_lines: {
+        Row: {
+          id: number
+          order_id: string
+          product_id: string
+          qty: number
+          unit_cost: number
+        }
+        Insert: {
+          id?: never
+          order_id: string
+          product_id: string
+          qty: number
+          unit_cost: number
+        }
+        Update: {
+          id?: never
+          order_id?: string
+          product_id?: string
+          qty?: number
+          unit_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_order_lines_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_orders: {
+        Row: {
+          created_at: string
+          id: string
+          received_at: string | null
+          reference: string
+          status: string
+          supplier: string
+        }
+        Insert: {
+          created_at: string
+          id: string
+          received_at?: string | null
+          reference: string
+          status: string
+          supplier: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          received_at?: string | null
+          reference?: string
+          status?: string
+          supplier?: string
+        }
+        Relationships: []
+      }
+      recipe_ingredients: {
+        Row: {
+          id: number
+          product_id: string
+          qty: number
+          recipe_id: string
+          unit: string
+        }
+        Insert: {
+          id?: never
+          product_id: string
+          qty: number
+          recipe_id: string
+          unit: string
+        }
+        Update: {
+          id?: never
+          product_id?: string
+          qty?: number
+          recipe_id?: string
+          unit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_ingredients_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipe_ingredients_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recipes: {
+        Row: {
+          id: string
+          product_id: string
+        }
+        Insert: {
+          id: string
+          product_id: string
+        }
+        Update: {
+          id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipes_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales: {
+        Row: {
+          cashier: string
+          channel: string
+          created_at: string
+          id: string
+          items: number
+          method: string
+          time: string
+          total: number
+        }
+        Insert: {
+          cashier: string
+          channel: string
+          created_at?: string
+          id: string
+          items: number
+          method: string
+          time: string
+          total: number
+        }
+        Update: {
+          cashier?: string
+          channel?: string
+          created_at?: string
+          id?: string
+          items?: number
+          method?: string
+          time?: string
+          total?: number
+        }
+        Relationships: []
+      }
+      stock_movements: {
+        Row: {
+          created_at: string
+          id: string
+          item: string
+          qty: number
+          time: string
+          type: string
+          user: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          item: string
+          qty: number
+          time: string
+          type: string
+          user: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item?: string
+          qty?: number
+          time?: string
+          type?: string
+          user?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

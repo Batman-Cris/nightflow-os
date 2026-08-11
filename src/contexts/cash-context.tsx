@@ -1,4 +1,15 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+
+import { supabase } from "@/integrations/supabase/client";
 
 export type CashMethod = "Cash" | "Card" | "Transfer" | "QR";
 export type CashEntryType = "sale" | "income" | "expense";
@@ -56,101 +67,92 @@ const nowLabel = () =>
 
 const uid = (prefix: string) => `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 
-const DEMO_ENTRIES: CashEntry[] = [
-  {
-    id: "c1",
-    time: "21:05",
-    type: "income",
-    method: "Cash",
-    amount: 300,
-    note: "Opening float",
-    user: "Franco Lema",
-  },
-  {
-    id: "c2",
-    time: "22:10",
-    type: "sale",
-    method: "Cash",
-    amount: 88,
-    note: "POS sale",
-    user: "Rafa Molina",
-  },
-  {
-    id: "c3",
-    time: "23:40",
-    type: "sale",
-    method: "Card",
-    amount: 220,
-    note: "POS sale",
-    user: "Lucía Prat",
-  },
-  {
-    id: "c4",
-    time: "00:15",
-    type: "expense",
-    method: "Cash",
-    amount: -40,
-    note: "Ice delivery",
-    user: "Franco Lema",
-  },
-];
+const logError = (label: string, error: unknown) => {
+  if (error) console.error(`[cash] ${label}`, error);
+};
+
+type SessionRow = {
+  id: string;
+  opened_at: string | null;
+  opened_by: string | null;
+  opening_float: number;
+  closed_at: string | null;
+  closed_by: string | null;
+  counted_cash: number | null;
+  status: string;
+};
+
+type State = {
+  sessions: SessionRow[];
+  entries: (CashEntry & { sessionId: string })[];
+};
+
+async function fetchState(): Promise<State> {
+  const [{ data: sessions, error }, { data: entries, error: entriesError }] = await Promise.all([
+    supabase.from("cash_sessions").select("*").order("created_at", { ascending: false }),
+    supabase.from("cash_entries").select("*").order("created_at", { ascending: false }),
+  ]);
+  logError("cash_sessions", error);
+  logError("cash_entries", entriesError);
+  return {
+    sessions: (sessions ?? []).map((s) => ({
+      id: s.id,
+      opened_at: s.opened_at,
+      opened_by: s.opened_by,
+      opening_float: Number(s.opening_float),
+      closed_at: s.closed_at,
+      closed_by: s.closed_by,
+      counted_cash: s.counted_cash === null ? null : Number(s.counted_cash),
+      status: s.status,
+    })),
+    entries: (entries ?? []).map((e) => ({
+      id: e.id,
+      sessionId: e.session_id,
+      time: e.time,
+      type: e.type as CashEntryType,
+      method: e.method as CashMethod,
+      amount: Number(e.amount),
+      note: e.note ?? "",
+      user: e.user,
+    })),
+  };
+}
 
 export function CashProvider({ children }: { children: ReactNode }) {
-  const [isOpen, setIsOpen] = useState(true);
-  const [openedAt, setOpenedAt] = useState<string | null>("21:00");
-  const [openedBy, setOpenedBy] = useState<string | null>("Franco Lema");
-  const [openingFloat, setOpeningFloat] = useState(300);
-  const [entries, setEntries] = useState<CashEntry[]>(DEMO_ENTRIES);
-  const [closedSessions, setClosedSessions] = useState<ClosedSession[]>([]);
+  const [state, setState] = useState<State>({ sessions: [], entries: [] });
 
-  const openShift = useCallback((float: number, user: string) => {
-    setIsOpen(true);
-    setOpenedAt(nowLabel());
-    setOpenedBy(user);
-    setOpeningFloat(float);
-    setEntries([
-      {
-        id: uid("c"),
-        time: nowLabel(),
-        type: "income",
-        method: "Cash",
-        amount: float,
-        note: "Opening float",
-        user,
-      },
-    ]);
-  }, []);
+  const reload = useCallback(async () => setState(await fetchState()), []);
 
-  const addEntry = useCallback(
-    (
-      type: "income" | "expense",
-      amount: number,
-      method: CashMethod,
-      note: string,
-      user: string,
-    ) => {
-      setEntries((prev) => [
-        {
-          id: uid("c"),
-          time: nowLabel(),
-          type,
-          method,
-          amount: type === "expense" ? -Math.abs(amount) : Math.abs(amount),
-          note,
-          user,
-        },
-        ...prev,
-      ]);
-    },
-    [],
+  useEffect(() => {
+    void reload();
+    const channel = supabase
+      .channel("nox-cash")
+      .on("postgres_changes", { event: "*", schema: "public", table: "cash_sessions" }, () => {
+        void reload();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "cash_entries" }, () => {
+        void reload();
+      })
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [reload]);
+
+  const openSession = useMemo(
+    () => state.sessions.find((s) => s.status === "open") ?? null,
+    [state.sessions],
   );
 
-  const logSale = useCallback((amount: number, method: CashMethod, user: string) => {
-    setEntries((prev) => [
-      { id: uid("c"), time: nowLabel(), type: "sale", method, amount, note: "POS sale", user },
-      ...prev,
-    ]);
-  }, []);
+  const entries = useMemo<CashEntry[]>(
+    () =>
+      openSession
+        ? state.entries
+            .filter((e) => e.sessionId === openSession.id)
+            .map(({ sessionId: _sessionId, ...e }) => e)
+        : [],
+    [state.entries, openSession],
+  );
 
   const expectedCash = useMemo(
     () => entries.filter((e) => e.method === "Cash").reduce((s, e) => s + e.amount, 0),
@@ -163,37 +165,147 @@ export function CashProvider({ children }: { children: ReactNode }) {
     return totals;
   }, [entries]);
 
+  const closedSessions = useMemo<ClosedSession[]>(
+    () =>
+      state.sessions
+        .filter((s) => s.status === "closed")
+        .map((s) => {
+          const sessionEntries = state.entries.filter((e) => e.sessionId === s.id);
+          const expected = sessionEntries
+            .filter((e) => e.method === "Cash")
+            .reduce((sum, e) => sum + e.amount, 0);
+          const counted = s.counted_cash ?? 0;
+          return {
+            id: s.id,
+            openedAt: s.opened_at ?? "",
+            openedBy: s.opened_by ?? "",
+            closedAt: s.closed_at ?? "",
+            closedBy: s.closed_by ?? "",
+            openingFloat: s.opening_float,
+            expectedCash: expected,
+            countedCash: counted,
+            difference: counted - expected,
+          };
+        }),
+    [state.sessions, state.entries],
+  );
+
+  const sessionRef = useRef(openSession);
+  sessionRef.current = openSession;
+  const expectedRef = useRef(expectedCash);
+  expectedRef.current = expectedCash;
+
+  const openShift = useCallback(
+    (float: number, user: string) => {
+      void (async () => {
+        const id = uid("cs");
+        const time = nowLabel();
+        const { error } = await supabase.from("cash_sessions").insert({
+          id,
+          opened_at: time,
+          opened_by: user,
+          opening_float: float,
+          status: "open",
+        });
+        logError("open shift", error);
+        const { error: entryError } = await supabase.from("cash_entries").insert({
+          id: uid("c"),
+          session_id: id,
+          time,
+          type: "income",
+          method: "Cash",
+          amount: float,
+          note: "Opening float",
+          user,
+        });
+        logError("opening float entry", entryError);
+        await reload();
+      })();
+    },
+    [reload],
+  );
+
+  const insertEntry = useCallback(
+    (entry: Omit<CashEntry, "id">) => {
+      const session = sessionRef.current;
+      if (!session) return;
+      const row = { ...entry, id: uid("c") };
+      setState((prev) => ({
+        ...prev,
+        entries: [{ ...row, sessionId: session.id }, ...prev.entries],
+      }));
+      void (async () => {
+        const { error } = await supabase.from("cash_entries").insert({
+          id: row.id,
+          session_id: session.id,
+          time: row.time,
+          type: row.type,
+          method: row.method,
+          amount: row.amount,
+          note: row.note,
+          user: row.user,
+        });
+        logError("insert entry", error);
+        await reload();
+      })();
+    },
+    [reload],
+  );
+
+  const addEntry = useCallback(
+    (
+      type: "income" | "expense",
+      amount: number,
+      method: CashMethod,
+      note: string,
+      user: string,
+    ) => {
+      insertEntry({
+        time: nowLabel(),
+        type,
+        method,
+        amount: type === "expense" ? -Math.abs(amount) : Math.abs(amount),
+        note,
+        user,
+      });
+    },
+    [insertEntry],
+  );
+
+  const logSale = useCallback(
+    (amount: number, method: CashMethod, user: string) => {
+      insertEntry({ time: nowLabel(), type: "sale", method, amount, note: "POS sale", user });
+    },
+    [insertEntry],
+  );
+
   const closeShift = useCallback(
     (countedCash: number, user: string) => {
-      if (!isOpen || openedAt === null || openedBy === null) return;
-      setClosedSessions((prev) => [
-        {
-          id: uid("cs"),
-          openedAt,
-          openedBy,
-          closedAt: nowLabel(),
-          closedBy: user,
-          openingFloat,
-          expectedCash,
-          countedCash,
-          difference: countedCash - expectedCash,
-        },
-        ...prev,
-      ]);
-      setIsOpen(false);
-      setOpenedAt(null);
-      setOpenedBy(null);
-      setEntries([]);
+      const session = sessionRef.current;
+      if (!session) return;
+      void (async () => {
+        const { error } = await supabase
+          .from("cash_sessions")
+          .update({
+            status: "closed",
+            closed_at: nowLabel(),
+            closed_by: user,
+            counted_cash: countedCash,
+          })
+          .eq("id", session.id);
+        logError("close shift", error);
+        await reload();
+      })();
     },
-    [isOpen, openedAt, openedBy, openingFloat, expectedCash],
+    [reload],
   );
 
   const value = useMemo<CashValue>(
     () => ({
-      isOpen,
-      openedAt,
-      openedBy,
-      openingFloat,
+      isOpen: openSession !== null,
+      openedAt: openSession?.opened_at ?? null,
+      openedBy: openSession?.opened_by ?? null,
+      openingFloat: openSession?.opening_float ?? 0,
       entries,
       closedSessions,
       expectedCash,
@@ -204,10 +316,7 @@ export function CashProvider({ children }: { children: ReactNode }) {
       closeShift,
     }),
     [
-      isOpen,
-      openedAt,
-      openedBy,
-      openingFloat,
+      openSession,
       entries,
       closedSessions,
       expectedCash,
