@@ -176,7 +176,13 @@ export function AppShell({
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
+  const { user, loading, signOut } = useAuth();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate({ to: "/login" });
+    }
+  }, [loading, user, navigate]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -188,6 +194,14 @@ export function AppShell({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
+
+  if (loading || !user) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-background">
+        <p className="text-sm text-muted-foreground">Loading your workspace…</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-background">
