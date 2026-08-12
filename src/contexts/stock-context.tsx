@@ -21,6 +21,8 @@ export type StockMovement = {
   type: MovementType;
   qty: number;
   user: string;
+  /** DB insert timestamp (ISO), used for sorting the live activity feed. */
+  createdAt?: string;
 };
 
 export type SaleLine = { productId: string; qty: number };
@@ -116,6 +118,7 @@ async function fetchMovements(): Promise<StockMovement[]> {
     type: r.type as MovementType,
     qty: r.qty,
     user: r.user,
+    createdAt: r.created_at,
   }));
 }
 
@@ -134,6 +137,7 @@ async function fetchSales(): Promise<Sale[]> {
     total: Number(r.total),
     method: r.method as Sale["method"],
     cashier: r.cashier,
+    createdAt: r.created_at,
   }));
 }
 
@@ -528,9 +532,11 @@ export function StockProvider({ children }: { children: ReactNode }) {
   const recordSale = useCallback(
     (sale: Omit<Sale, "id">) => {
       const id = uid("s");
-      setSales((prev) => [{ ...sale, id }, ...prev]);
+      const createdAt = new Date().toISOString();
+      setSales((prev) => [{ ...sale, id, createdAt }, ...prev]);
       void (async () => {
-        const { error } = await supabase.from("sales").insert({ id, ...sale });
+        const { createdAt: _ignored, ...row } = sale;
+        const { error } = await supabase.from("sales").insert({ id, ...row, created_at: createdAt });
         logError("insert sale", error);
         await reloadSales();
       })();
