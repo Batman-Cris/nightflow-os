@@ -38,6 +38,7 @@ import {
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { notifications, venue } from "@/data/demo";
 import { useAuth } from "@/contexts/auth-context";
+import { canAccess, DEFAULT_ROUTE, isFullScreenRole } from "@/lib/permissions";
 
 function Brand({ collapsed }: { collapsed?: boolean }) {
   return (
@@ -57,21 +58,24 @@ function Brand({ collapsed }: { collapsed?: boolean }) {
 
 function NavList({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { user } = useAuth();
+  const visibleItems = navItems.filter((i) => !user || canAccess(user.role, i.to));
 
   return (
     <ScrollArea className="flex-1 px-3">
       <nav className="space-y-6 pb-6">
-        {navGroups.map((group) => (
-          <div key={group}>
-            {!collapsed && (
-              <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                {group}
-              </p>
-            )}
-            <ul className="space-y-1">
-              {navItems
-                .filter((i) => i.group === group)
-                .map((item) => {
+        {navGroups.map((group) => {
+          const groupItems = visibleItems.filter((i) => i.group === group);
+          if (groupItems.length === 0) return null;
+          return (
+            <div key={group}>
+              {!collapsed && (
+                <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  {group}
+                </p>
+              )}
+              <ul className="space-y-1">
+                {groupItems.map((item) => {
                   const active = pathname === item.to;
                   return (
                     <li key={item.to}>
@@ -109,9 +113,10 @@ function NavList({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate?: 
                     </li>
                   );
                 })}
-            </ul>
-          </div>
-        ))}
+              </ul>
+            </div>
+          );
+        })}
       </nav>
     </ScrollArea>
   );
@@ -176,6 +181,7 @@ export function AppShell({
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user, loading, signOut } = useAuth();
 
   useEffect(() => {
@@ -183,6 +189,12 @@ export function AppShell({
       navigate({ to: "/login" });
     }
   }, [loading, user, navigate]);
+
+  useEffect(() => {
+    if (user && !canAccess(user.role, pathname)) {
+      navigate({ to: DEFAULT_ROUTE[user.role] });
+    }
+  }, [user, pathname, navigate]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -195,10 +207,32 @@ export function AppShell({
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  if (loading || !user) {
+  if (loading || !user || !canAccess(user.role, pathname)) {
     return (
       <div className="grid min-h-screen place-items-center bg-background">
         <p className="text-sm text-muted-foreground">Loading your workspace…</p>
+      </div>
+    );
+  }
+
+  if (isFullScreenRole(user.role)) {
+    return (
+      <div className="flex min-h-screen flex-col bg-background">
+        <header className="flex h-14 items-center justify-between border-b border-border px-4">
+          <div className="flex items-center gap-2">
+            <span className="grid size-8 place-items-center rounded-lg bg-primary text-primary-foreground">
+              <Sparkles className="size-4" />
+            </span>
+            <span className="font-display text-sm font-extrabold tracking-tight">{title}</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-muted-foreground">{user.name}</span>
+            <Button variant="ghost" size="icon" onClick={() => void signOut()}>
+              <LogOut className="size-4" />
+            </Button>
+          </div>
+        </header>
+        <main className="flex-1 p-4 md:p-6">{children}</main>
       </div>
     );
   }
