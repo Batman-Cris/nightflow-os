@@ -14,7 +14,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { currency, salesPerHour } from "@/data/demo";
+import { currency } from "@/data/demo";
+import { hourlySales } from "@/lib/dashboard-metrics";
 import { useStock } from "@/contexts/stock-context";
 
 export const Route = createFileRoute("/sales")({
@@ -43,6 +44,8 @@ function SalesPage() {
       s.cashier.toLowerCase().includes(query.toLowerCase()) ||
       s.channel.toLowerCase().includes(query.toLowerCase()),
   );
+
+  const hourly = hourlySales(sales);
 
   const gross = sales.reduce((s, sale) => s + sale.total, 0);
   const cardVolume = sales
@@ -76,7 +79,7 @@ function SalesPage() {
 
       <Panel className="mt-6" title="Revenue by hour" subtitle="Bar, door and VIP combined">
         <AreaTrend
-          data={salesPerHour}
+          data={hourly}
           xKey="hour"
           keys={[{ key: "sales", color: "var(--color-chart-1)" }]}
           height={260}
