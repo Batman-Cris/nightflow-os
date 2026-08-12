@@ -532,9 +532,11 @@ export function StockProvider({ children }: { children: ReactNode }) {
   const recordSale = useCallback(
     (sale: Omit<Sale, "id">) => {
       const id = uid("s");
-      setSales((prev) => [{ ...sale, id }, ...prev]);
+      const createdAt = new Date().toISOString();
+      setSales((prev) => [{ ...sale, id, createdAt }, ...prev]);
       void (async () => {
-        const { error } = await supabase.from("sales").insert({ id, ...sale });
+        const { createdAt: _ignored, ...row } = sale;
+        const { error } = await supabase.from("sales").insert({ id, ...row, created_at: createdAt });
         logError("insert sale", error);
         await reloadSales();
       })();
