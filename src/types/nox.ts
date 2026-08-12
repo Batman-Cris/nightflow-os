@@ -27,6 +27,8 @@ export type Ticket = {
   price: number;
   purchasedAt: string;
   status: TicketStatus;
+  /** ISO/label timestamp of door check-in, when the ticket has been scanned. */
+  checkedInAt?: string | null;
 };
 
 export type Product = {
@@ -95,6 +97,8 @@ export type Sale = {
   total: number;
   method: "Cash" | "Card" | "Transfer" | "QR";
   cashier: string;
+  /** DB insert timestamp (ISO), used for date/hour aggregation. */
+  createdAt?: string;
 };
 
 export type RecipeIngredient = {

@@ -49,6 +49,7 @@ async function fetchTickets(): Promise<Ticket[]> {
     price: Number(r.price),
     purchasedAt: r.purchased_at,
     status: r.status as Ticket["status"],
+    checkedInAt: r.checked_in_at,
   }));
 }
 
