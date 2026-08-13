@@ -13,32 +13,36 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAuth, type Role } from "@/contexts/auth-context";
+import { ROLE_LABELS } from "@/lib/permissions";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
-      { title: "Sign in — NOX OS" },
+      { title: "Iniciar sesión — NOX OS" },
       {
         name: "description",
-        content: "Sign in to NOX OS, the operating system for nightlife venues.",
+        content: "Iniciá sesión en NOX OS, el sistema operativo para locales nocturnos.",
       },
-      { property: "og:title", content: "Sign in — NOX OS" },
-      { property: "og:description", content: "Access your venue dashboard, POS and door control." },
+      { property: "og:title", content: "Iniciar sesión — NOX OS" },
+      {
+        property: "og:description",
+        content: "Accedé al panel de tu local, la barra y el control de acceso.",
+      },
     ],
   }),
   component: LoginPage,
 });
 
-const ROLES: { value: Role; label: string }[] = [
-  { value: "owner", label: "Owner" },
-  { value: "manager", label: "Manager" },
-  { value: "cashier", label: "Cashier" },
-  { value: "bartender", label: "Bartender" },
-  { value: "doorman", label: "Doorman" },
-  { value: "promoter", label: "Promoter" },
-  { value: "waiter", label: "Waiter" },
-  { value: "supervisor", label: "Supervisor" },
+const SIGNUP_ROLES: Role[] = [
+  "owner",
+  "manager",
+  "supervisor",
+  "cashier",
+  "bartender",
+  "doorman",
+  "promoter",
+  "waiter",
 ];
 
 function LoginPage() {
@@ -75,11 +79,11 @@ function LoginPage() {
 
     if (mode === "signup") {
       setError(null);
-      // Supabase may require email confirmation depending on project settings —
-      // if a session came back immediately, go straight in; otherwise tell the user to check email.
+      // Supabase puede pedir confirmación por email según la configuración del proyecto —
+      // si ya volvió una sesión activa, entramos directo; si no, avisamos que revise su correo.
       const { data } = await supabase.auth.getSession();
       if (!data.session) {
-        setError("Account created — check your email to confirm before signing in.");
+        setError("Cuenta creada — revisá tu email para confirmarla antes de iniciar sesión.");
         setMode("signin");
         return;
       }
@@ -96,18 +100,18 @@ function LoginPage() {
             <Moon className="size-5" />
           </span>
           <h1 className="mt-6 font-display text-3xl font-bold tracking-tight">
-            {mode === "signin" ? "Welcome back" : "Create your account"}
+            {mode === "signin" ? "Bienvenido de nuevo" : "Creá tu cuenta"}
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
             {mode === "signin"
-              ? "Sign in to run tonight from one place."
-              : "Set up your staff account for this venue."}
+              ? "Iniciá sesión para manejar la noche desde un solo lugar."
+              : "Configurá tu cuenta de staff para este local."}
           </p>
 
           <div className="mt-8 grid gap-4">
             {mode === "signup" && (
               <div className="grid gap-2">
-                <Label htmlFor="name">Full name</Label>
+                <Label htmlFor="name">Nombre completo</Label>
                 <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
               </div>
             )}
@@ -122,7 +126,7 @@ function LoginPage() {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Contraseña</Label>
               <Input
                 id="password"
                 type="password"
@@ -134,15 +138,15 @@ function LoginPage() {
             </div>
             {mode === "signup" && (
               <div className="grid gap-2">
-                <Label>Role</Label>
+                <Label>Rol</Label>
                 <Select value={role} onValueChange={(v) => setRole(v as Role)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {ROLES.map((r) => (
-                      <SelectItem key={r.value} value={r.value}>
-                        {r.label}
+                    {SIGNUP_ROLES.map((r) => (
+                      <SelectItem key={r} value={r}>
+                        {ROLE_LABELS[r]}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -153,7 +157,7 @@ function LoginPage() {
             {error && <p className="text-sm text-destructive">{error}</p>}
 
             <Button type="submit" className="mt-2 w-full" disabled={busy}>
-              {busy ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
+              {busy ? "Un momento…" : mode === "signin" ? "Iniciar sesión" : "Crear cuenta"}
             </Button>
           </div>
 
@@ -166,8 +170,8 @@ function LoginPage() {
             }}
           >
             {mode === "signin"
-              ? "New venue? Create a staff account"
-              : "Already have an account? Sign in"}
+              ? "¿Local nuevo? Creá una cuenta de staff"
+              : "¿Ya tenés cuenta? Iniciá sesión"}
           </button>
         </form>
       </div>
@@ -175,11 +179,11 @@ function LoginPage() {
         <div className="absolute inset-0 bg-[radial-gradient(120%_80%_at_20%_0%,color-mix(in_oklab,var(--color-primary)_30%,transparent),transparent_70%)]" />
         <div className="relative flex h-full flex-col justify-end p-12">
           <p className="font-display text-4xl font-bold leading-tight">
-            The operating system for nightlife.
+            El sistema operativo de la noche.
           </p>
           <p className="mt-4 max-w-md text-sm text-muted-foreground">
-            Tickets, door access, POS, inventory and analytics — one workspace, running in real time
-            from the first guest to last call.
+            Entradas, control de acceso, barra, stock y analítica — un solo espacio de trabajo,
+            corriendo en tiempo real desde el primer invitado hasta el cierre.
           </p>
         </div>
       </div>
