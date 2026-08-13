@@ -199,7 +199,7 @@ export const products: Product[] = [
   {
     id: "p01",
     name: "Grey Goose Bottle",
-    category: "Spirits",
+    category: "Destilados",
     supplier: "Diageo Ar",
     cost: 48,
     price: 180,
@@ -210,7 +210,7 @@ export const products: Product[] = [
   {
     id: "p02",
     name: "Moët & Chandon",
-    category: "Champagne",
+    category: "Espumantes",
     supplier: "LVMH Dist",
     cost: 62,
     price: 260,
@@ -221,7 +221,7 @@ export const products: Product[] = [
   {
     id: "p03",
     name: "Espresso Martini",
-    category: "Cocktails",
+    category: "Tragos",
     supplier: "In-house",
     cost: 3.4,
     price: 16,
@@ -232,7 +232,7 @@ export const products: Product[] = [
   {
     id: "p04",
     name: "Gin Tonic Premium",
-    category: "Cocktails",
+    category: "Tragos",
     supplier: "In-house",
     cost: 3.1,
     price: 14,
@@ -243,7 +243,7 @@ export const products: Product[] = [
   {
     id: "p05",
     name: "Corona 355ml",
-    category: "Beer",
+    category: "Cerveza",
     supplier: "Quilmes SA",
     cost: 1.2,
     price: 7,
@@ -254,7 +254,7 @@ export const products: Product[] = [
   {
     id: "p06",
     name: "Red Bull",
-    category: "Mixers",
+    category: "Mezcladores",
     supplier: "RB Andina",
     cost: 1.1,
     price: 6,
@@ -265,7 +265,7 @@ export const products: Product[] = [
   {
     id: "p07",
     name: "Jägermeister",
-    category: "Spirits",
+    category: "Destilados",
     supplier: "Mast-Jäger",
     cost: 26,
     price: 120,
@@ -276,7 +276,7 @@ export const products: Product[] = [
   {
     id: "p08",
     name: "Don Julio 1942",
-    category: "Spirits",
+    category: "Destilados",
     supplier: "Diageo Ar",
     cost: 190,
     price: 620,
@@ -287,7 +287,7 @@ export const products: Product[] = [
   {
     id: "p09",
     name: "Sparkling Water",
-    category: "Non-alcoholic",
+    category: "Sin alcohol",
     supplier: "Villavicencio",
     cost: 0.5,
     price: 4,
@@ -298,7 +298,7 @@ export const products: Product[] = [
   {
     id: "p10",
     name: "Aperol Spritz",
-    category: "Cocktails",
+    category: "Tragos",
     supplier: "In-house",
     cost: 2.9,
     price: 13,
@@ -309,7 +309,7 @@ export const products: Product[] = [
   {
     id: "p11",
     name: "Truffle Fries",
-    category: "Food",
+    category: "Comida",
     supplier: "Cocina NOX",
     cost: 2.2,
     price: 11,
@@ -320,7 +320,7 @@ export const products: Product[] = [
   {
     id: "p12",
     name: "Absolut Vodka",
-    category: "Spirits",
+    category: "Destilados",
     supplier: "Pernod",
     cost: 22,
     price: 110,
@@ -332,7 +332,7 @@ export const products: Product[] = [
   {
     id: "p13",
     name: "Vodka (well, ml)",
-    category: "Ingredients",
+    category: "Ingredientes",
     supplier: "Pernod",
     cost: 0.02,
     price: 0,
@@ -343,7 +343,7 @@ export const products: Product[] = [
   {
     id: "p14",
     name: "Coffee Liqueur (ml)",
-    category: "Ingredients",
+    category: "Ingredientes",
     supplier: "Diageo Ar",
     cost: 0.03,
     price: 0,
@@ -354,7 +354,7 @@ export const products: Product[] = [
   {
     id: "p15",
     name: "Espresso Shots",
-    category: "Ingredients",
+    category: "Ingredientes",
     supplier: "Cocina NOX",
     cost: 0.4,
     price: 0,
@@ -365,7 +365,7 @@ export const products: Product[] = [
   {
     id: "p16",
     name: "Gin (well, ml)",
-    category: "Ingredients",
+    category: "Ingredientes",
     supplier: "Pernod",
     cost: 0.025,
     price: 0,
@@ -376,7 +376,7 @@ export const products: Product[] = [
   {
     id: "p17",
     name: "Tonic Water (ml)",
-    category: "Ingredients",
+    category: "Ingredientes",
     supplier: "Villavicencio",
     cost: 0.004,
     price: 0,
@@ -387,7 +387,7 @@ export const products: Product[] = [
   {
     id: "p18",
     name: "Aperol (ml)",
-    category: "Ingredients",
+    category: "Ingredientes",
     supplier: "LVMH Dist",
     cost: 0.03,
     price: 0,
@@ -398,7 +398,7 @@ export const products: Product[] = [
   {
     id: "p19",
     name: "Prosecco (ml)",
-    category: "Ingredients",
+    category: "Ingredientes",
     supplier: "LVMH Dist",
     cost: 0.02,
     price: 0,
@@ -1143,13 +1143,13 @@ export const notifications = [
 
 export const posCategories = [
   "All",
-  "Cocktails",
-  "Spirits",
-  "Beer",
-  "Champagne",
-  "Mixers",
-  "Food",
-  "Non-alcoholic",
+  "Tragos",
+  "Destilados",
+  "Cerveza",
+  "Espumantes",
+  "Mezcladores",
+  "Comida",
+  "Sin alcohol",
 ];
 
 export const currency = (n: number) =>
