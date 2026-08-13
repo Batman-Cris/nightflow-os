@@ -31,24 +31,24 @@ import { useCash } from "@/contexts/cash-context";
 export const Route = createFileRoute("/pos")({
   head: () => ({
     meta: [
-      { title: "POS — NOX OS" },
+      { title: "Barra — NOX OS" },
       {
         name: "description",
         content:
-          "A bar-speed point of sale: big product cards, instant cart and four payment methods.",
+          "Un punto de venta a la velocidad de la barra: cards grandes, carrito instantáneo y cuatro medios de pago.",
       },
-      { property: "og:title", content: "POS — NOX OS" },
-      { property: "og:description", content: "Bar-speed point of sale for busy nights." },
+      { property: "og:title", content: "Barra — NOX OS" },
+      { property: "og:description", content: "Punto de venta rápido para noches a full." },
     ],
   }),
   component: PosPage,
 });
 
 const methods = [
-  { key: "Cash", icon: Banknote },
-  { key: "Card", icon: CreditCard },
-  { key: "Transfer", icon: CreditCard },
-  { key: "QR", icon: QrCode },
+  { key: "Cash", label: "Efectivo", icon: Banknote },
+  { key: "Card", label: "Tarjeta", icon: CreditCard },
+  { key: "Transfer", label: "Transferencia", icon: CreditCard },
+  { key: "QR", label: "QR", icon: QrCode },
 ] as const;
 
 const CASHIER = "Paula Nieves";
@@ -63,11 +63,11 @@ function PosPage() {
 
   const visible = products.filter(
     (p) =>
-      p.category !== "Ingredients" &&
+      p.category !== "Ingredientes" &&
       (category === "All" || p.category === category) &&
       p.name.toLowerCase().includes(query.toLowerCase()),
   );
-  const sellableCategories = posCategories.filter((c) => c !== "Ingredients");
+  const sellableCategories = posCategories.filter((c) => c !== "Ingredientes");
 
   const lines = useMemo(
     () =>
@@ -83,7 +83,7 @@ function PosPage() {
     setCart((c) => {
       const nextQty = (c[id] ?? 0) + 1;
       if (!canFulfill(id, nextQty)) {
-        toast.error("Out of stock — can't add more of this item.");
+        toast.error("Sin stock — no se puede agregar más de este producto.");
         return c;
       }
       return { ...c, [id]: nextQty };
@@ -119,23 +119,24 @@ function PosPage() {
       });
       logSale(total, method as "Cash" | "Card" | "Transfer" | "QR", CASHIER);
       setCart({});
-      toast.success(`Payment of ${currency(subtotal + tax)} accepted via ${method}.`);
+      const label = methods.find((m) => m.key === method)?.label ?? method;
+      toast.success(`Pago de ${currency(subtotal + tax)} aceptado por ${label}.`);
     } else {
       const detail = result.blocked
         .map((id) => {
           const name = products.find((p) => p.id === id)?.name ?? id;
-          return `${name} (${result.reasons[id] ?? "out of stock"})`;
+          return `${name} (${result.reasons[id] ?? "sin stock"})`;
         })
         .join(", ");
-      toast.error(`Couldn't complete the sale — ${detail}. Adjust the order and retry.`);
+      toast.error(`No se pudo completar la venta — ${detail}. Ajustá el pedido y reintentá.`);
     }
   };
 
   return (
     <AppShell
-      title="Point of sale"
-      description="Bar 2 · Paula Nieves · shift started 21:00"
-      actions={<Pill tone="success">Terminal connected</Pill>}
+      title="Punto de venta"
+      description="Barra 2 · Paula Nieves · turno iniciado 21:00"
+      actions={<Pill tone="success">Terminal conectada</Pill>}
     >
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         <div>
@@ -144,7 +145,7 @@ function PosPage() {
               <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 className="h-11 pl-9"
-                placeholder="Search products…"
+                placeholder="Buscar productos…"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />
@@ -197,7 +198,7 @@ function PosPage() {
                   <p className="mt-6 text-base font-semibold leading-tight">{p.name}</p>
                   {outOfStock ? (
                     <span className="mt-1 inline-block">
-                      <Pill tone="danger">Out of stock</Pill>
+                      <Pill tone="danger">Sin stock</Pill>
                     </span>
                   ) : (
                     <p className="mt-1 font-display text-2xl font-bold text-primary">
@@ -206,7 +207,7 @@ function PosPage() {
                   )}
                   {p.minStock > 0 && !outOfStock && availableStock(p.id) <= p.minStock && (
                     <p className="mt-1 text-[11px] font-medium text-warning">
-                      Only {availableStock(p.id)} left
+                      Quedan {availableStock(p.id)}
                     </p>
                   )}
                 </button>
@@ -218,8 +219,8 @@ function PosPage() {
             <div className="mt-6">
               <EmptyState
                 icon={Search}
-                title="No products match"
-                body="Try another category or clear the search field."
+                title="Ningún producto coincide"
+                body="Probá con otra categoría o borrá la búsqueda."
               />
             </div>
           )}
@@ -228,7 +229,7 @@ function PosPage() {
         <aside className="surface-card sticky top-24 flex h-fit flex-col p-5">
           <div className="flex items-center justify-between">
             <h2 className="flex items-center gap-2 text-sm font-semibold">
-              <ShoppingCart className="size-4" /> Current order
+              <ShoppingCart className="size-4" /> Pedido actual
             </h2>
             {lines.length > 0 && (
               <Button variant="ghost" size="sm" onClick={() => setCart({})}>
@@ -240,7 +241,7 @@ function PosPage() {
           <div className="mt-4 space-y-3">
             {lines.length === 0 && (
               <p className="py-10 text-center text-sm text-muted-foreground">
-                Tap a product to start an order.
+                Tocá un producto para empezar un pedido.
               </p>
             )}
             {lines.map((l) => (
@@ -250,7 +251,7 @@ function PosPage() {
               >
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{l.product.name}</p>
-                  <p className="text-xs text-muted-foreground">{currency(l.product.price)} each</p>
+                  <p className="text-xs text-muted-foreground">{currency(l.product.price)} c/u</p>
                 </div>
                 <div className="flex items-center gap-1">
                   <Button
@@ -281,7 +282,7 @@ function PosPage() {
               <span>{currency(subtotal)}</span>
             </div>
             <div className="flex justify-between text-muted-foreground">
-              <span>Tax (21%)</span>
+              <span>IVA (21%)</span>
               <span>{currency(tax)}</span>
             </div>
             <div className="flex justify-between pt-2 font-display text-xl font-bold">
@@ -295,7 +296,7 @@ function PosPage() {
             disabled={lines.length === 0}
             onClick={() => setPayOpen(true)}
           >
-            Charge {currency(subtotal + tax)}
+            Cobrar {currency(subtotal + tax)}
           </Button>
         </aside>
       </div>
@@ -303,9 +304,9 @@ function PosPage() {
       <Dialog open={payOpen} onOpenChange={setPayOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Take payment</DialogTitle>
+            <DialogTitle>Cobrar</DialogTitle>
             <DialogDescription>
-              {lines.length} items · {currency(subtotal + tax)} due
+              {lines.length} productos · {currency(subtotal + tax)} a pagar
             </DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-2 gap-3 py-2">
@@ -316,7 +317,7 @@ function PosPage() {
                 className="flex flex-col items-center gap-2 rounded-xl border border-border p-6 transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:bg-primary/5"
               >
                 <m.icon className="size-6 text-primary" />
-                <span className="text-sm font-medium">{m.key}</span>
+                <span className="text-sm font-medium">{m.label}</span>
               </button>
             ))}
           </div>
