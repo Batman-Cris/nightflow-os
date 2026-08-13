@@ -18,18 +18,19 @@ import {
 } from "@/components/ui/table";
 import { currency } from "@/data/demo";
 import { useTickets } from "@/contexts/tickets-context";
-import type { TicketStatus } from "@/types/nox";
+import type { TicketStatus, TicketTier } from "@/types/nox";
 
 export const Route = createFileRoute("/tickets")({
   head: () => ({
     meta: [
-      { title: "Tickets — NOX OS" },
+      { title: "Entradas — NOX OS" },
       {
         name: "description",
-        content: "Every ticket sold: tiers, QR codes, check-in status and refunds in one place.",
+        content:
+          "Cada entrada vendida: tipo, código QR, estado de ingreso y reembolsos en un solo lugar.",
       },
-      { property: "og:title", content: "Tickets — NOX OS" },
-      { property: "og:description", content: "Ticket tiers, QR codes and check-in status." },
+      { property: "og:title", content: "Entradas — NOX OS" },
+      { property: "og:description", content: "Tipos de entrada, códigos QR y estado de ingreso." },
     ],
   }),
   component: TicketsPage,
@@ -40,6 +41,21 @@ const tone: Record<TicketStatus, "success" | "primary" | "muted" | "danger"> = {
   "checked-in": "success",
   used: "muted",
   refunded: "danger",
+};
+
+const STATUS_LABELS: Record<TicketStatus, string> = {
+  valid: "Válida",
+  "checked-in": "Ingresó",
+  used: "Usada",
+  refunded: "Reembolsada",
+};
+
+const TIER_LABELS: Record<TicketTier, string> = {
+  General: "General",
+  "Early Bird": "Preventa",
+  VIP: "VIP",
+  "Guest List": "Lista de invitados",
+  Backstage: "Backstage",
 };
 
 function TicketsPage() {
@@ -60,45 +76,45 @@ function TicketsPage() {
 
   return (
     <AppShell
-      title="Tickets"
-      description="Sold tickets, tiers and door validation status."
+      title="Entradas"
+      description="Entradas vendidas, tipos y estado de validación en la puerta."
       actions={
         <Button
           size="sm"
           variant="outline"
-          onClick={() => toast.success("Ticket list exported as CSV.")}
+          onClick={() => toast.success("Lista de entradas exportada como CSV.")}
         >
-          Export list
+          Exportar lista
         </Button>
       }
     >
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Tickets issued" value={String(rows.length)} icon={TicketIcon} />
-        <StatCard label="Checked in" value={String(checkedIn)} icon={QrCode} hint="tonight" />
-        <StatCard label="VIP tickets" value={String(vipCount)} icon={TicketIcon} />
-        <StatCard label="Ticket revenue" value={currency(revenue)} icon={TicketIcon} />
+        <StatCard label="Entradas emitidas" value={String(rows.length)} icon={TicketIcon} />
+        <StatCard label="Ya ingresaron" value={String(checkedIn)} icon={QrCode} hint="esta noche" />
+        <StatCard label="Entradas VIP" value={String(vipCount)} icon={TicketIcon} />
+        <StatCard label="Recaudación" value={currency(revenue)} icon={TicketIcon} />
       </div>
 
       <Panel
         className="mt-6"
-        title="Ticket registry"
-        subtitle={`${filtered.length} results`}
+        title="Registro de entradas"
+        subtitle={`${filtered.length} resultados`}
         actions={
           <div className="flex flex-wrap items-center gap-3">
             <Tabs value={tab} onValueChange={setTab}>
               <TabsList>
-                <TabsTrigger value="all">All</TabsTrigger>
-                <TabsTrigger value="valid">Valid</TabsTrigger>
-                <TabsTrigger value="checked-in">Checked in</TabsTrigger>
-                <TabsTrigger value="used">Used</TabsTrigger>
-                <TabsTrigger value="refunded">Refunded</TabsTrigger>
+                <TabsTrigger value="all">Todas</TabsTrigger>
+                <TabsTrigger value="valid">Válidas</TabsTrigger>
+                <TabsTrigger value="checked-in">Ingresaron</TabsTrigger>
+                <TabsTrigger value="used">Usadas</TabsTrigger>
+                <TabsTrigger value="refunded">Reembolsadas</TabsTrigger>
               </TabsList>
             </Tabs>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
               <Input
                 className="h-9 w-52 pl-9"
-                placeholder="Name or QR code…"
+                placeholder="Nombre o código QR…"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />
@@ -109,14 +125,14 @@ function TicketsPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>QR code</TableHead>
-              <TableHead>Holder</TableHead>
-              <TableHead>Event</TableHead>
-              <TableHead>Tier</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead>Purchased</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Check-in</TableHead>
+              <TableHead>Código QR</TableHead>
+              <TableHead>Titular</TableHead>
+              <TableHead>Evento</TableHead>
+              <TableHead>Tipo</TableHead>
+              <TableHead>Precio</TableHead>
+              <TableHead>Comprada</TableHead>
+              <TableHead>Estado</TableHead>
+              <TableHead className="text-right">Ingreso</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -135,13 +151,13 @@ function TicketsPage() {
                 <TableCell className="text-sm">{t.event}</TableCell>
                 <TableCell>
                   <Pill tone={t.tier === "VIP" || t.tier === "Backstage" ? "primary" : "muted"}>
-                    {t.tier}
+                    {TIER_LABELS[t.tier]}
                   </Pill>
                 </TableCell>
-                <TableCell>{t.price === 0 ? "Comp" : currency(t.price)}</TableCell>
+                <TableCell>{t.price === 0 ? "Cortesía" : currency(t.price)}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">{t.purchasedAt}</TableCell>
                 <TableCell>
-                  <Pill tone={tone[t.status]}>{t.status}</Pill>
+                  <Pill tone={tone[t.status]}>{STATUS_LABELS[t.status]}</Pill>
                 </TableCell>
                 <TableCell className="text-right">
                   <Button
@@ -149,15 +165,15 @@ function TicketsPage() {
                     size="sm"
                     disabled={t.status !== "valid"}
                     onClick={async () => {
-                      const outcome = await checkIn(t.code, "Manual — Tickets");
+                      const outcome = await checkIn(t.code, "Manual — Entradas");
                       if (outcome.outcome !== "invalid" && outcome.outcome !== "used") {
-                        toast.success(`${t.holder} checked in.`);
+                        toast.success(`${t.holder} ingresó.`);
                       } else {
                         toast.error(outcome.detail);
                       }
                     }}
                   >
-                    Validate
+                    Validar
                   </Button>
                 </TableCell>
               </TableRow>
