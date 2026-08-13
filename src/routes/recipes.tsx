@@ -31,14 +31,17 @@ import type { RecipeIngredient } from "@/types/nox";
 export const Route = createFileRoute("/recipes")({
   head: () => ({
     meta: [
-      { title: "Recipes — NOX OS" },
+      { title: "Recetas — NOX OS" },
       {
         name: "description",
         content:
-          "Define what goes into every cocktail so a single POS sale deducts real ingredient stock.",
+          "Definí qué lleva cada trago para que cada venta en la barra descuente el ingrediente real.",
       },
-      { property: "og:title", content: "Recipes — NOX OS" },
-      { property: "og:description", content: "Recipes that auto-deduct ingredient stock on sale." },
+      { property: "og:title", content: "Recetas — NOX OS" },
+      {
+        property: "og:description",
+        content: "Recetas que descuentan stock de ingredientes al vender.",
+      },
     ],
   }),
   component: RecipesPage,
@@ -48,8 +51,8 @@ function RecipesPage() {
   const { products, recipes, movements, addRecipe } = useStock();
   const [open, setOpen] = useState(false);
 
-  const finishedProducts = products.filter((p) => p.category !== "Ingredients");
-  const ingredientProducts = products.filter((p) => p.category === "Ingredients");
+  const finishedProducts = products.filter((p) => p.category !== "Ingredientes");
+  const ingredientProducts = products.filter((p) => p.category === "Ingredientes");
   const productsWithoutRecipe = finishedProducts.filter(
     (p) => !recipes.some((r) => r.productId === p.id),
   );
@@ -74,47 +77,47 @@ function RecipesPage() {
 
   return (
     <AppShell
-      title="Recipes"
-      description="Recipes → Stock: every cocktail sold deducts its real ingredients automatically."
+      title="Recetas"
+      description="Recetas → Stock: cada trago vendido descuenta sus ingredientes reales automáticamente."
       actions={
         <Button
           size="sm"
           onClick={() => setOpen(true)}
           disabled={productsWithoutRecipe.length === 0}
         >
-          <Plus className="mr-1.5 size-4" /> New recipe
+          <Plus className="mr-1.5 size-4" /> Nueva receta
         </Button>
       }
     >
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Recipes defined" value={String(recipes.length)} icon={FlaskConical} />
+        <StatCard label="Recetas definidas" value={String(recipes.length)} icon={FlaskConical} />
         <StatCard
-          label="Ingredients tracked"
+          label="Ingredientes cargados"
           value={String(ingredientProducts.length)}
           icon={FlaskConical}
         />
-        <StatCard label="Avg. margin" value={`${avgMargin.toFixed(0)}%`} icon={FlaskConical} />
+        <StatCard label="Margen promedio" value={`${avgMargin.toFixed(0)}%`} icon={FlaskConical} />
         <StatCard
-          label="Recipe deductions tonight"
+          label="Descuentos por receta esta noche"
           value={String(recipeSalesTonight)}
           icon={FlaskConical}
-          hint="ingredient movements logged"
+          hint="movimientos de ingredientes registrados"
         />
       </div>
 
       <Panel
         className="mt-6"
-        title="Menu recipes"
-        subtitle="Cost and margin are computed live from ingredient stock cost"
+        title="Recetas de la carta"
+        subtitle="El costo y el margen se calculan en vivo según el costo de los ingredientes"
       >
         {rows.length === 0 ? (
           <EmptyState
             icon={FlaskConical}
-            title="No recipes yet"
-            body="Create your first recipe to start deducting real ingredients on every POS sale."
+            title="Todavía no hay recetas"
+            body="Creá tu primera receta para empezar a descontar ingredientes reales en cada venta."
             action={
               <Button size="sm" onClick={() => setOpen(true)}>
-                <Plus className="mr-1.5 size-4" /> New recipe
+                <Plus className="mr-1.5 size-4" /> Nueva receta
               </Button>
             }
           />
@@ -124,13 +127,13 @@ function RecipesPage() {
               <div key={recipe.id} className="rounded-xl border border-border p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <p className="font-medium">{product?.name ?? "Unknown product"}</p>
+                    <p className="font-medium">{product?.name ?? "Producto desconocido"}</p>
                     <p className="text-xs text-muted-foreground">
-                      Sells for {currency(product?.price ?? 0)}
+                      Se vende a {currency(product?.price ?? 0)}
                     </p>
                   </div>
                   <Pill tone={margin >= 70 ? "success" : margin >= 40 ? "warning" : "danger"}>
-                    {margin.toFixed(0)}% margin
+                    {margin.toFixed(0)}% margen
                   </Pill>
                 </div>
                 <ul className="mt-4 space-y-1.5">
@@ -156,7 +159,7 @@ function RecipesPage() {
                               servingsLeft <= 15 && "font-medium text-warning",
                             )}
                           >
-                            {servingsLeft} servings left
+                            {servingsLeft} tragos restantes
                           </span>
                         )}
                       </li>
@@ -164,7 +167,7 @@ function RecipesPage() {
                   })}
                 </ul>
                 <p className="mt-3 border-t border-border pt-3 text-xs text-muted-foreground">
-                  Ingredient cost: {currency(cost)} per serving
+                  Costo de ingredientes: {currency(cost)} por trago
                 </p>
               </div>
             ))}
@@ -179,7 +182,7 @@ function RecipesPage() {
         ingredients={ingredientProducts}
         onSave={(recipe) => {
           addRecipe(recipe);
-          toast.success("Recipe saved — it will now deduct stock automatically on every sale.");
+          toast.success("Receta guardada — de ahora en más descuenta stock solo en cada venta.");
           setOpen(false);
         }}
       />
@@ -225,19 +228,19 @@ function NewRecipeDialog({
     >
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>New recipe</DialogTitle>
+          <DialogTitle>Nueva receta</DialogTitle>
           <DialogDescription>
-            Pick the finished product and every ingredient it consumes. One POS sale of this product
-            will deduct all of these automatically.
+            Elegí el producto final y cada ingrediente que consume. Una venta en la barra de este
+            producto va a descontar todo esto automáticamente.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div>
-            <Label>Finished product</Label>
+            <Label>Producto final</Label>
             <Select value={productId} onValueChange={setProductId}>
               <SelectTrigger className="mt-1.5">
-                <SelectValue placeholder="Select a product…" />
+                <SelectValue placeholder="Elegí un producto…" />
               </SelectTrigger>
               <SelectContent>
                 {candidates.map((c) => (
@@ -250,7 +253,7 @@ function NewRecipeDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>Ingredients</Label>
+            <Label>Ingredientes</Label>
             {rows.map((row, i) => (
               <div key={i} className="flex items-center gap-2">
                 <Select
@@ -262,7 +265,7 @@ function NewRecipeDialog({
                   }
                 >
                   <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="Ingredient…" />
+                    <SelectValue placeholder="Ingrediente…" />
                   </SelectTrigger>
                   <SelectContent>
                     {ingredients.map((ing) => (
@@ -274,7 +277,7 @@ function NewRecipeDialog({
                 </Select>
                 <Input
                   className="w-20"
-                  placeholder="Qty"
+                  placeholder="Cant."
                   inputMode="decimal"
                   value={row.qty}
                   onChange={(e) =>
@@ -285,7 +288,7 @@ function NewRecipeDialog({
                 />
                 <Input
                   className="w-16"
-                  placeholder="unit"
+                  placeholder="unidad"
                   value={row.unit}
                   onChange={(e) =>
                     setRows((prev) =>
@@ -309,14 +312,14 @@ function NewRecipeDialog({
               size="sm"
               onClick={() => setRows((prev) => [...prev, { productId: "", qty: "", unit: "ml" }])}
             >
-              <Plus className="mr-1.5 size-3.5" /> Add ingredient
+              <Plus className="mr-1.5 size-3.5" /> Agregar ingrediente
             </Button>
           </div>
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            Cancelar
           </Button>
           <Button
             disabled={!canSave}
@@ -331,7 +334,7 @@ function NewRecipeDialog({
               })
             }
           >
-            Save recipe
+            Guardar receta
           </Button>
         </DialogFooter>
       </DialogContent>
