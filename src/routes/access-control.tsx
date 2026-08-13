@@ -12,14 +12,14 @@ import { useTickets, type CheckInOutcome, type CheckInResult } from "@/contexts/
 export const Route = createFileRoute("/access-control")({
   head: () => ({
     meta: [
-      { title: "Access Control — NOX OS" },
+      { title: "Control de acceso — NOX OS" },
       {
         name: "description",
         content:
-          "Scan real ticket codes at the door: instant valid, VIP, guest and duplicate results.",
+          "Escaneá códigos de entrada reales en la puerta: resultado instantáneo válido, VIP, invitado o duplicado.",
       },
-      { property: "og:title", content: "Access Control — NOX OS" },
-      { property: "og:description", content: "Door scanning against real ticket data." },
+      { property: "og:title", content: "Control de acceso — NOX OS" },
+      { property: "og:description", content: "Escaneo de puerta contra datos reales de entradas." },
     ],
   }),
   component: AccessControlPage,
@@ -32,36 +32,36 @@ const styles: Record<
   valid: {
     ring: "border-success/50 bg-success/10",
     text: "text-success",
-    label: "Access granted",
+    label: "Acceso permitido",
     icon: CheckCircle2,
   },
   vip: {
     ring: "border-primary/50 bg-primary/10",
     text: "text-primary",
-    label: "VIP guest",
+    label: "Invitado VIP",
     icon: Crown,
   },
   guest: {
     ring: "border-chart-4/50 bg-chart-4/10",
     text: "text-chart-4",
-    label: "Guest list",
+    label: "Lista de invitados",
     icon: UserCheck,
   },
   used: {
     ring: "border-warning/50 bg-warning/10",
     text: "text-warning",
-    label: "Already used",
+    label: "Ya utilizada",
     icon: ShieldAlert,
   },
   invalid: {
     ring: "border-destructive/50 bg-destructive/10",
     text: "text-destructive",
-    label: "Access denied",
+    label: "Acceso denegado",
     icon: XCircle,
   },
 };
 
-const DOOR = "Door 1";
+const DOOR = "Puerta 1";
 
 function AccessControlPage() {
   const { tickets, checkIn } = useTickets();
@@ -97,19 +97,19 @@ function AccessControlPage() {
 
   return (
     <AppShell
-      title="Access control"
-      description="Door scanner · type or paste a ticket code and press Enter"
-      actions={<Pill tone="success">{DOOR} online</Pill>}
+      title="Control de acceso"
+      description="Escáner de puerta · escribí o pegá un código de entrada y apretá Enter"
+      actions={<Pill tone="success">{DOOR} conectada</Pill>}
     >
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Tickets tonight" value={String(tickets.length)} icon={ScanLine} />
-        <StatCard label="Checked in" value={String(grantedTonight)} icon={CheckCircle2} />
-        <StatCard label="Still to arrive" value={String(stillValid)} icon={UserCheck} />
+        <StatCard label="Entradas esta noche" value={String(tickets.length)} icon={ScanLine} />
+        <StatCard label="Ya ingresaron" value={String(grantedTonight)} icon={CheckCircle2} />
+        <StatCard label="Faltan llegar" value={String(stillValid)} icon={UserCheck} />
         <StatCard
-          label="Used / refunded"
+          label="Usadas / reembolsadas"
           value={String(usedOrRefunded)}
           icon={XCircle}
-          hint="not admittable"
+          hint="no habilitan el ingreso"
         />
       </div>
 
@@ -138,10 +138,10 @@ function AccessControlPage() {
                   <ScanLine className="size-16" />
                 </div>
                 <p className="mt-6 font-display text-xl font-bold">
-                  {scanning ? "Checking ticket…" : "Ready to scan"}
+                  {scanning ? "Verificando entrada…" : "Listo para escanear"}
                 </p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Enter the code from the guest's QR ticket below
+                  Ingresá el código del QR de la entrada del invitado
                 </p>
               </>
             )}
@@ -157,7 +157,7 @@ function AccessControlPage() {
                   {style.label}
                 </p>
                 <p className="mt-2 text-lg font-semibold">
-                  {result.ticket?.holder ?? "Unknown code"}
+                  {result.ticket?.holder ?? "Código desconocido"}
                 </p>
                 <p className="text-sm text-muted-foreground">{result.detail}</p>
                 <p className="mt-1 font-mono text-xs text-muted-foreground">
@@ -187,16 +187,16 @@ function AccessControlPage() {
                 type="submit"
                 disabled={scanning || !code.trim()}
               >
-                {scanning ? "Checking…" : "Scan"}
+                {scanning ? "Verificando…" : "Escanear"}
               </Button>
             </form>
           </div>
         </div>
 
-        <Panel title="Scan log" subtitle="Most recent first">
+        <Panel title="Registro de escaneos" subtitle="Más reciente primero">
           {log.length === 0 ? (
             <p className="py-10 text-center text-sm text-muted-foreground">
-              No scans yet in this session.
+              Todavía no hay escaneos en esta sesión.
             </p>
           ) : (
             <ul className="space-y-3">
@@ -218,7 +218,7 @@ function AccessControlPage() {
                   </span>
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">
-                      {l.ticket?.holder ?? "Unknown code"}
+                      {l.ticket?.holder ?? "Código desconocido"}
                     </p>
                     <p className="truncate text-[11px] text-muted-foreground">
                       {styles[l.outcome].label}
@@ -230,7 +230,7 @@ function AccessControlPage() {
           )}
           <div className="mt-6 border-t border-border pt-4">
             <p className="text-xs font-semibold text-muted-foreground">
-              Try a real code — still valid
+              Probá con un código real — todavía válido
             </p>
             <ul className="mt-3 space-y-2">
               {tickets
