@@ -30,16 +30,16 @@ import { useStock, type PurchaseOrderLine } from "@/contexts/stock-context";
 export const Route = createFileRoute("/purchasing")({
   head: () => ({
     meta: [
-      { title: "Purchasing — NOX OS" },
+      { title: "Compras — NOX OS" },
       {
         name: "description",
         content:
-          "Create supplier purchase orders from low-stock suggestions and restock inventory the moment they arrive.",
+          "Generá órdenes de compra a partir de sugerencias de stock bajo y reponé el stock apenas llegan.",
       },
-      { property: "og:title", content: "Purchasing — NOX OS" },
+      { property: "og:title", content: "Compras — NOX OS" },
       {
         property: "og:description",
-        content: "Supplier orders that restock real inventory on receipt.",
+        content: "Órdenes a proveedores que reponen stock real al recibirlas.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -47,6 +47,12 @@ export const Route = createFileRoute("/purchasing")({
   }),
   component: PurchasingPage,
 });
+
+const STATUS_LABELS: Record<string, string> = {
+  draft: "borrador",
+  sent: "enviada",
+  received: "recibida",
+};
 
 type DraftLine = { productId: string; name: string; qty: string; unitCost: string };
 
@@ -100,12 +106,12 @@ function PurchasingPage() {
       }))
       .filter((l) => l.qty > 0);
     if (payload.length === 0) {
-      toast.error("Add at least one line with a quantity.");
+      toast.error("Agregá al menos una línea con cantidad.");
       return;
     }
     const order = createPurchaseOrder(supplier, payload);
     setSupplier(null);
-    toast.success(`${order.reference} saved as draft for ${supplier}.`);
+    toast.success(`${order.reference} guardada como borrador para ${supplier}.`);
   };
 
   const orderTotal = (l: PurchaseOrderLine[]) => l.reduce((s, x) => s + x.qty * x.unitCost, 0);
@@ -117,29 +123,33 @@ function PurchasingPage() {
 
   return (
     <AppShell
-      title="Purchasing"
-      description="Purchasing → Inventory: receiving an order restocks the shelf for real."
+      title="Compras"
+      description="Compras → Stock: recibir una orden repone el estante de verdad."
     >
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Suppliers" value={String(suppliers.length)} icon={Truck} />
-        <StatCard label="Open orders" value={String(open.length)} icon={ClipboardList} />
-        <StatCard label="Units incoming" value={String(incomingUnits)} icon={PackageCheck} />
+        <StatCard label="Proveedores" value={String(suppliers.length)} icon={Truck} />
+        <StatCard label="Órdenes abiertas" value={String(open.length)} icon={ClipboardList} />
+        <StatCard label="Unidades en camino" value={String(incomingUnits)} icon={PackageCheck} />
         <StatCard
-          label="Below minimum"
+          label="Bajo el mínimo"
           value={String(lowTotal)}
           icon={AlertTriangle}
-          hint="reorder now"
+          hint="reponer ahora"
         />
       </div>
 
-      <Panel className="mt-6" title="Suppliers" subtitle="Grouped from product supplier data">
+      <Panel
+        className="mt-6"
+        title="Proveedores"
+        subtitle="Agrupados por proveedor de cada producto"
+      >
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Supplier</TableHead>
-              <TableHead>Products</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Action</TableHead>
+              <TableHead>Proveedor</TableHead>
+              <TableHead>Productos</TableHead>
+              <TableHead>Estado</TableHead>
+              <TableHead className="text-right">Acción</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -147,18 +157,18 @@ function PurchasingPage() {
               <TableRow key={s.name} className="row-hover">
                 <TableCell className="font-medium">{s.name}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">
-                  {s.items.length} products
+                  {s.items.length} productos
                 </TableCell>
                 <TableCell>
                   {s.low.length > 0 ? (
-                    <Pill tone="warning">{s.low.length} below minimum</Pill>
+                    <Pill tone="warning">{s.low.length} bajo el mínimo</Pill>
                   ) : (
-                    <Pill tone="success">Stocked</Pill>
+                    <Pill tone="success">Stockeado</Pill>
                   )}
                 </TableCell>
                 <TableCell className="text-right">
                   <Button size="sm" variant="outline" onClick={() => openOrderFor(s.name)}>
-                    Create order
+                    Generar orden
                   </Button>
                 </TableCell>
               </TableRow>
@@ -167,24 +177,28 @@ function PurchasingPage() {
         </Table>
       </Panel>
 
-      <Panel className="mt-6" title="Purchase orders" subtitle={`${purchaseOrders.length} total`}>
+      <Panel
+        className="mt-6"
+        title="Órdenes de compra"
+        subtitle={`${purchaseOrders.length} en total`}
+      >
         {purchaseOrders.length === 0 ? (
           <EmptyState
             icon={ClipboardList}
-            title="No purchase orders yet"
-            body="Create an order from a supplier above to get started."
+            title="Todavía no hay órdenes de compra"
+            body="Generá una orden desde un proveedor de arriba para empezar."
           />
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Reference</TableHead>
-                <TableHead>Supplier</TableHead>
-                <TableHead>Items</TableHead>
+                <TableHead>Referencia</TableHead>
+                <TableHead>Proveedor</TableHead>
+                <TableHead>Productos</TableHead>
                 <TableHead>Total</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Action</TableHead>
+                <TableHead>Fecha</TableHead>
+                <TableHead>Estado</TableHead>
+                <TableHead className="text-right">Acción</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -193,7 +207,7 @@ function PurchasingPage() {
                   <TableCell className="font-mono text-xs">{o.reference}</TableCell>
                   <TableCell className="font-medium">{o.supplier}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {o.lines.length} lines ·{" "}
+                    {o.lines.length} líneas ·{" "}
                     {o.lines.map((l) => `${nameOf(l.productId)} ×${l.qty}`).join(", ")}
                   </TableCell>
                   <TableCell>{currency(orderTotal(o.lines))}</TableCell>
@@ -210,7 +224,7 @@ function PurchasingPage() {
                             : "muted"
                       }
                     >
-                      {o.status}
+                      {STATUS_LABELS[o.status] ?? o.status}
                     </Pill>
                   </TableCell>
                   <TableCell className="text-right">
@@ -220,10 +234,10 @@ function PurchasingPage() {
                         variant="outline"
                         onClick={() => {
                           sendPurchaseOrder(o.id);
-                          toast.success(`${o.reference} sent to ${o.supplier}.`);
+                          toast.success(`${o.reference} enviada a ${o.supplier}.`);
                         }}
                       >
-                        <Send className="mr-1.5 size-3.5" /> Send
+                        <Send className="mr-1.5 size-3.5" /> Enviar
                       </Button>
                     )}
                     {o.status === "sent" && (
@@ -231,14 +245,14 @@ function PurchasingPage() {
                         size="sm"
                         onClick={() => {
                           receivePurchaseOrder(o.id);
-                          toast.success(`${o.reference} received — stock updated.`);
+                          toast.success(`${o.reference} recibida — stock actualizado.`);
                         }}
                       >
-                        <PackageCheck className="mr-1.5 size-3.5" /> Mark received
+                        <PackageCheck className="mr-1.5 size-3.5" /> Marcar recibida
                       </Button>
                     )}
                     {o.status === "received" && (
-                      <span className="text-xs text-muted-foreground">Stock updated</span>
+                      <span className="text-xs text-muted-foreground">Stock actualizado</span>
                     )}
                   </TableCell>
                 </TableRow>
@@ -251,21 +265,21 @@ function PurchasingPage() {
       <Dialog open={supplier !== null} onOpenChange={(v) => !v && setSupplier(null)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>New order · {supplier}</DialogTitle>
+            <DialogTitle>Nueva orden · {supplier}</DialogTitle>
             <DialogDescription>
-              Quantities are pre-filled from items below minimum stock. Adjust anything before
-              saving the draft.
+              Las cantidades vienen precargadas según lo que está bajo el mínimo. Ajustá lo que haga
+              falta antes de guardar el borrador.
             </DialogDescription>
           </DialogHeader>
           <div className="max-h-[50vh] space-y-3 overflow-y-auto pr-1">
             {lines.map((l, i) => (
               <div key={l.productId} className="grid grid-cols-[1fr_90px_110px] items-end gap-3">
                 <div>
-                  <Label className="text-xs text-muted-foreground">Product</Label>
+                  <Label className="text-xs text-muted-foreground">Producto</Label>
                   <p className="mt-1 text-sm font-medium">{l.name}</p>
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground">Qty</Label>
+                  <Label className="text-xs text-muted-foreground">Cant.</Label>
                   <Input
                     className="mt-1 h-9"
                     inputMode="numeric"
@@ -278,7 +292,7 @@ function PurchasingPage() {
                   />
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground">Unit cost</Label>
+                  <Label className="text-xs text-muted-foreground">Costo unit.</Label>
                   <Input
                     className="mt-1 h-9"
                     inputMode="decimal"
@@ -297,7 +311,7 @@ function PurchasingPage() {
             <span className="text-sm text-muted-foreground">
               Total <span className="font-semibold text-foreground">{currency(draftTotal)}</span>
             </span>
-            <Button onClick={saveDraft}>Save draft order</Button>
+            <Button onClick={saveDraft}>Guardar borrador</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
