@@ -16,23 +16,30 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { currency } from "@/data/demo";
-import { useStock } from "@/contexts/stock-context";
+import { useStock, type MovementType } from "@/contexts/stock-context";
 
 export const Route = createFileRoute("/inventory")({
   head: () => ({
     meta: [
-      { title: "Inventory — NOX OS" },
+      { title: "Stock — NOX OS" },
       {
         name: "description",
         content:
-          "Stock levels, minimums, suppliers and movement history with automatic low-stock alerts.",
+          "Niveles de stock, mínimos, proveedores e historial de movimientos con alertas automáticas.",
       },
-      { property: "og:title", content: "Inventory — NOX OS" },
-      { property: "og:description", content: "Stock levels, suppliers and low-stock alerts." },
+      { property: "og:title", content: "Stock — NOX OS" },
+      { property: "og:description", content: "Niveles de stock, proveedores y alertas." },
     ],
   }),
   component: InventoryPage,
 });
+
+const MOVEMENT_LABELS: Record<MovementType, string> = {
+  Sale: "Venta",
+  Recipe: "Receta",
+  Restock: "Reposición",
+  Breakage: "Rotura",
+};
 
 function InventoryPage() {
   const { products, movements } = useStock();
@@ -47,49 +54,54 @@ function InventoryPage() {
 
   return (
     <AppShell
-      title="Inventory"
-      description="Everything behind the bar, counted and watched."
+      title="Stock"
+      description="Todo lo que hay detrás de la barra, contado y vigilado."
       actions={
         <Button size="sm" variant="outline" asChild>
-          <Link to="/purchasing">Create purchase order</Link>
+          <Link to="/purchasing">Generar orden de compra</Link>
         </Button>
       }
     >
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="SKUs tracked" value={String(products.length)} icon={Boxes} />
+        <StatCard label="Productos cargados" value={String(products.length)} icon={Boxes} />
         <StatCard
-          label="Stock value"
+          label="Valor del stock"
           value={currency(stockValue)}
           delta={-4.1}
           icon={PackageCheck}
         />
         <StatCard
-          label="Below minimum"
+          label="Bajo el mínimo"
           value={String(critical.length)}
           icon={AlertTriangle}
-          hint="reorder now"
+          hint="reponer ahora"
         />
-        <StatCard label="Waste this week" value={currency(320)} delta={-11.5} icon={TrendingDown} />
+        <StatCard
+          label="Merma esta semana"
+          value={currency(320)}
+          delta={-11.5}
+          icon={TrendingDown}
+        />
       </div>
 
       {critical.length > 0 && (
         <div className="mt-6 flex flex-wrap items-center gap-3 rounded-xl border border-warning/30 bg-warning/10 px-5 py-4">
           <AlertTriangle className="size-4 text-warning" />
           <p className="text-sm">
-            <span className="font-semibold">{critical.length} items</span> are below minimum stock:{" "}
-            {critical.map((c) => c.name).join(", ")}.
+            <span className="font-semibold">{critical.length} productos</span> están bajo el stock
+            mínimo: {critical.map((c) => c.name).join(", ")}.
           </p>
         </div>
       )}
 
       <Panel
         className="mt-6"
-        title="Stock levels"
-        subtitle={`${rows.length} products`}
+        title="Niveles de stock"
+        subtitle={`${rows.length} productos`}
         actions={
           <Input
             className="h-9 w-56"
-            placeholder="Search product or supplier…"
+            placeholder="Buscar producto o proveedor…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -98,13 +110,13 @@ function InventoryPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Product</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Supplier</TableHead>
+              <TableHead>Producto</TableHead>
+              <TableHead>Categoría</TableHead>
+              <TableHead>Proveedor</TableHead>
               <TableHead>Stock</TableHead>
-              <TableHead>Cost</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead>Margin</TableHead>
+              <TableHead>Costo</TableHead>
+              <TableHead>Precio</TableHead>
+              <TableHead>Margen</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -118,7 +130,7 @@ function InventoryPage() {
                   <TableCell className="text-sm text-muted-foreground">{p.supplier}</TableCell>
                   <TableCell className="w-44">
                     {p.minStock === 0 ? (
-                      <Pill tone="muted">Made to order</Pill>
+                      <Pill tone="muted">Por pedido</Pill>
                     ) : (
                       <>
                         <Progress
@@ -132,7 +144,7 @@ function InventoryPage() {
                               : "mt-1 block text-[11px] text-muted-foreground"
                           }
                         >
-                          {p.stock} in stock · min {p.minStock}
+                          {p.stock} en stock · mín {p.minStock}
                         </span>
                       </>
                     )}
@@ -149,15 +161,15 @@ function InventoryPage() {
         </Table>
       </Panel>
 
-      <Panel className="mt-6" title="Stock movements" subtitle="Tonight">
+      <Panel className="mt-6" title="Movimientos de stock" subtitle="Esta noche">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Time</TableHead>
-              <TableHead>Item</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Quantity</TableHead>
-              <TableHead>User</TableHead>
+              <TableHead>Hora</TableHead>
+              <TableHead>Producto</TableHead>
+              <TableHead>Tipo</TableHead>
+              <TableHead>Cantidad</TableHead>
+              <TableHead>Usuario</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -177,7 +189,7 @@ function InventoryPage() {
                             : "muted"
                     }
                   >
-                    {m.type}
+                    {MOVEMENT_LABELS[m.type]}
                   </Pill>
                 </TableCell>
                 <TableCell className={m.qty > 0 ? "text-success" : "text-muted-foreground"}>
