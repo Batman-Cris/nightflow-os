@@ -12,6 +12,14 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import type { Ticket } from "@/types/nox";
 
+const TIER_LABELS: Record<Ticket["tier"], string> = {
+  General: "General",
+  "Early Bird": "Preventa",
+  VIP: "VIP",
+  "Guest List": "Lista de invitados",
+  Backstage: "Backstage",
+};
+
 export type CheckInOutcome = "valid" | "vip" | "guest" | "used" | "invalid";
 
 export type CheckInResult = {
@@ -83,22 +91,26 @@ export function TicketsProvider({ children }: { children: ReactNode }) {
       const ticket = findByCode(code.trim());
 
       if (!ticket) {
-        return { outcome: "invalid", ticket: null, detail: "Ticket not found for tonight's event" };
+        return {
+          outcome: "invalid",
+          ticket: null,
+          detail: "No se encontró una entrada con ese código para el evento de esta noche",
+        };
       }
 
       if (ticket.status === "checked-in" || ticket.status === "used") {
         return {
           outcome: "used",
           ticket,
-          detail: `Already scanned earlier tonight`,
+          detail: `Ya fue escaneada antes esta noche`,
         };
       }
 
       if (ticket.status === "refunded") {
-        return { outcome: "invalid", ticket, detail: "This ticket was refunded" };
+        return { outcome: "invalid", ticket, detail: "Esta entrada fue reembolsada" };
       }
 
-      // status === "valid" — grant access.
+      // status === "valid" — se otorga el acceso.
       const time = nowLabel();
       setTickets((prev) =>
         prev.map((t) => (t.id === ticket.id ? { ...t, status: "checked-in" } : t)),
@@ -121,7 +133,7 @@ export function TicketsProvider({ children }: { children: ReactNode }) {
       return {
         outcome,
         ticket,
-        detail: `${ticket.tier} · ${ticket.event}`,
+        detail: `${TIER_LABELS[ticket.tier]} · ${ticket.event}`,
       };
     },
     [findByCode, reload],
