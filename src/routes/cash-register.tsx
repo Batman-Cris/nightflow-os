@@ -30,19 +30,33 @@ import { useCash, type CashMethod } from "@/contexts/cash-context";
 export const Route = createFileRoute("/cash-register")({
   head: () => ({
     meta: [
-      { title: "Cash Register — NOX OS" },
+      { title: "Caja — NOX OS" },
       {
         name: "description",
-        content: "Open the till, watch it fill live from POS sales, and close with a blind count.",
+        content:
+          "Abrí la caja, mirala llenarse en vivo con las ventas de la barra, y cerrá con arqueo.",
       },
-      { property: "og:title", content: "Cash Register — NOX OS" },
-      { property: "og:description", content: "Live cash ledger with open/close reconciliation." },
+      { property: "og:title", content: "Caja — NOX OS" },
+      { property: "og:description", content: "Ledger de caja en vivo con apertura y cierre." },
     ],
   }),
   component: CashRegisterPage,
 });
 
 const CASHIER = "Paula Nieves";
+
+const METHOD_LABELS: Record<CashMethod, string> = {
+  Cash: "Efectivo",
+  Card: "Tarjeta",
+  Transfer: "Transferencia",
+  QR: "QR",
+};
+
+const TYPE_LABELS: Record<"sale" | "income" | "expense", string> = {
+  sale: "Venta",
+  income: "Ingreso",
+  expense: "Egreso",
+};
 
 function CashRegisterPage() {
   const cash = useCash();
@@ -52,23 +66,19 @@ function CashRegisterPage() {
 
   if (!cash.isOpen) {
     return (
-      <AppShell title="Cash Register" description="No shift is currently open.">
+      <AppShell title="Caja" description="No hay ningún turno abierto ahora mismo.">
         <EmptyState
           icon={Unlock}
-          title="The register is closed"
-          body="Open a new shift with a starting float to begin tracking cash for tonight."
+          title="La caja está cerrada"
+          body="Abrí un nuevo turno con un monto inicial para empezar a registrar el efectivo de esta noche."
           action={
             <Button size="sm" onClick={() => setOpenDialog(true)}>
-              Open register
+              Abrir caja
             </Button>
           }
         />
         {cash.closedSessions.length > 0 && (
-          <Panel
-            className="mt-6"
-            title="Past sessions"
-            subtitle="Last closes and their reconciliation"
-          >
+          <Panel className="mt-6" title="Turnos anteriores" subtitle="Últimos cierres y su arqueo">
             <ClosedSessionsTable sessions={cash.closedSessions} />
           </Panel>
         )}
@@ -78,7 +88,7 @@ function CashRegisterPage() {
           onConfirm={(float) => {
             cash.openShift(float, CASHIER);
             setOpenDialog(false);
-            toast.success(`Register opened with ${currency(float)} float.`);
+            toast.success(`Caja abierta con ${currency(float)} de fondo inicial.`);
           }}
         />
       </AppShell>
@@ -87,42 +97,42 @@ function CashRegisterPage() {
 
   return (
     <AppShell
-      title="Cash Register"
-      description={`Open since ${cash.openedAt} · ${cash.openedBy}`}
+      title="Caja"
+      description={`Abierta desde las ${cash.openedAt} · ${cash.openedBy}`}
       actions={
         <Button size="sm" variant="outline" onClick={() => setCloseDialog(true)}>
-          <Lock className="mr-1.5 size-3.5" /> Close register
+          <Lock className="mr-1.5 size-3.5" /> Cerrar caja
         </Button>
       }
     >
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Opening float" value={currency(cash.openingFloat)} icon={Wallet} />
+        <StatCard label="Fondo inicial" value={currency(cash.openingFloat)} icon={Wallet} />
         <StatCard
-          label="Cash in drawer (expected)"
+          label="Efectivo esperado en caja"
           value={currency(cash.expectedCash)}
           icon={Wallet}
         />
         <StatCard
-          label="Card + Transfer + QR"
+          label="Tarjeta + Transferencia + QR"
           value={currency(
             cash.totalsByMethod.Card + cash.totalsByMethod.Transfer + cash.totalsByMethod.QR,
           )}
           icon={Wallet}
         />
-        <StatCard label="Ledger entries" value={String(cash.entries.length)} icon={Wallet} />
+        <StatCard label="Movimientos" value={String(cash.entries.length)} icon={Wallet} />
       </div>
 
       <Panel
         className="mt-6"
-        title="Live ledger"
-        subtitle="POS sales post here automatically — add manual income or expenses as needed"
+        title="Ledger en vivo"
+        subtitle="Las ventas de la barra se cargan solas acá — agregá ingresos o egresos manuales si hace falta"
         actions={
           <div className="flex gap-2">
             <Button size="sm" variant="outline" onClick={() => setEntryDialog("income")}>
-              <ArrowUpCircle className="mr-1.5 size-3.5" /> Income
+              <ArrowUpCircle className="mr-1.5 size-3.5" /> Ingreso
             </Button>
             <Button size="sm" variant="outline" onClick={() => setEntryDialog("expense")}>
-              <ArrowDownCircle className="mr-1.5 size-3.5" /> Expense
+              <ArrowDownCircle className="mr-1.5 size-3.5" /> Egreso
             </Button>
           </div>
         }
@@ -130,12 +140,12 @@ function CashRegisterPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Time</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Method</TableHead>
-              <TableHead>Note</TableHead>
-              <TableHead>User</TableHead>
-              <TableHead className="text-right">Amount</TableHead>
+              <TableHead>Hora</TableHead>
+              <TableHead>Tipo</TableHead>
+              <TableHead>Método</TableHead>
+              <TableHead>Nota</TableHead>
+              <TableHead>Usuario</TableHead>
+              <TableHead className="text-right">Monto</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -148,10 +158,10 @@ function CashRegisterPage() {
                       e.type === "expense" ? "danger" : e.type === "sale" ? "primary" : "success"
                     }
                   >
-                    {e.type}
+                    {TYPE_LABELS[e.type]}
                   </Pill>
                 </TableCell>
-                <TableCell className="text-sm">{e.method}</TableCell>
+                <TableCell className="text-sm">{METHOD_LABELS[e.method]}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">{e.note}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">{e.user}</TableCell>
                 <TableCell
@@ -167,11 +177,7 @@ function CashRegisterPage() {
       </Panel>
 
       {cash.closedSessions.length > 0 && (
-        <Panel
-          className="mt-6"
-          title="Past sessions"
-          subtitle="Last closes and their reconciliation"
-        >
+        <Panel className="mt-6" title="Turnos anteriores" subtitle="Últimos cierres y su arqueo">
           <ClosedSessionsTable sessions={cash.closedSessions} />
         </Panel>
       )}
@@ -183,7 +189,7 @@ function CashRegisterPage() {
           if (!entryDialog) return;
           cash.addEntry(entryDialog, amount, method, note, CASHIER);
           setEntryDialog(null);
-          toast.success(`${entryDialog === "income" ? "Income" : "Expense"} logged.`);
+          toast.success(`${entryDialog === "income" ? "Ingreso" : "Egreso"} registrado.`);
         }}
       />
       <CloseShiftDialog
@@ -194,10 +200,10 @@ function CashRegisterPage() {
           cash.closeShift(counted, CASHIER);
           setCloseDialog(false);
           const diff = counted - cash.expectedCash;
-          if (diff === 0) toast.success("Register closed — drawer matched exactly.");
+          if (diff === 0) toast.success("Caja cerrada — coincide exacto.");
           else
             toast.warning(
-              `Register closed — ${diff > 0 ? "over" : "short"} by ${currency(Math.abs(diff))}.`,
+              `Caja cerrada — ${diff > 0 ? "sobra" : "falta"} ${currency(Math.abs(diff))}.`,
             );
         }}
       />
@@ -214,12 +220,12 @@ function ClosedSessionsTable({
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Opened</TableHead>
-          <TableHead>Closed</TableHead>
-          <TableHead>By</TableHead>
-          <TableHead className="text-right">Expected</TableHead>
-          <TableHead className="text-right">Counted</TableHead>
-          <TableHead className="text-right">Difference</TableHead>
+          <TableHead>Abierta</TableHead>
+          <TableHead>Cerrada</TableHead>
+          <TableHead>Por</TableHead>
+          <TableHead className="text-right">Esperado</TableHead>
+          <TableHead className="text-right">Contado</TableHead>
+          <TableHead className="text-right">Diferencia</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -241,7 +247,7 @@ function ClosedSessionsTable({
                 }
               >
                 {s.difference === 0
-                  ? "Exact"
+                  ? "Exacto"
                   : `${s.difference > 0 ? "+" : ""}${currency(s.difference)}`}
               </Pill>
             </TableCell>
@@ -266,11 +272,13 @@ function OpenShiftDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Open register</DialogTitle>
-          <DialogDescription>Enter the starting cash float for this shift.</DialogDescription>
+          <DialogTitle>Abrir caja</DialogTitle>
+          <DialogDescription>
+            Ingresá el fondo inicial en efectivo para este turno.
+          </DialogDescription>
         </DialogHeader>
         <div>
-          <Label>Opening float</Label>
+          <Label>Fondo inicial</Label>
           <Input
             className="mt-1.5"
             inputMode="decimal"
@@ -280,13 +288,13 @@ function OpenShiftDialog({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            Cancelar
           </Button>
           <Button
             disabled={Number(float) < 0 || float === ""}
             onClick={() => onConfirm(Number(float))}
           >
-            Open register
+            Abrir caja
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -320,16 +328,18 @@ function EntryDialog({
     >
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{type === "expense" ? "Log an expense" : "Log income"}</DialogTitle>
+          <DialogTitle>
+            {type === "expense" ? "Registrar un egreso" : "Registrar un ingreso"}
+          </DialogTitle>
           <DialogDescription>
             {type === "expense"
-              ? "Cash paid out of the drawer — deliveries, tips, petty cash, etc."
-              : "Cash added to the drawer outside of a POS sale."}
+              ? "Efectivo que sale de la caja — repartos, propinas, gastos chicos, etc."
+              : "Efectivo que entra a la caja fuera de una venta de la barra."}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
           <div>
-            <Label>Amount</Label>
+            <Label>Monto</Label>
             <Input
               className="mt-1.5"
               inputMode="decimal"
@@ -339,10 +349,10 @@ function EntryDialog({
             />
           </div>
           <div>
-            <Label>Note</Label>
+            <Label>Nota</Label>
             <Input
               className="mt-1.5"
-              placeholder="e.g. Ice delivery"
+              placeholder="ej. Reparto de hielo"
               value={note}
               onChange={(e) => setNote(e.target.value)}
             />
@@ -350,13 +360,13 @@ function EntryDialog({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            Cancelar
           </Button>
           <Button
             disabled={Number(amount) <= 0 || note.trim() === ""}
             onClick={() => onConfirm(Number(amount), method, note.trim())}
           >
-            Save
+            Guardar
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -388,13 +398,13 @@ function CloseShiftDialog({
     >
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Close register — blind count</DialogTitle>
+          <DialogTitle>Cerrar caja — arqueo ciego</DialogTitle>
           <DialogDescription>
-            Count the cash in the drawer without looking at the expected total, then enter it below.
+            Contá el efectivo de la caja sin mirar el total esperado, y después ingresalo abajo.
           </DialogDescription>
         </DialogHeader>
         <div>
-          <Label>Counted cash</Label>
+          <Label>Efectivo contado</Label>
           <Input
             className="mt-1.5"
             inputMode="decimal"
@@ -412,20 +422,20 @@ function CloseShiftDialog({
               }`}
             >
               {diff === 0
-                ? "Matches expected exactly."
-                : `${diff > 0 ? "Over" : "Short"} by ${currency(Math.abs(diff))}.`}
+                ? "Coincide exacto con lo esperado."
+                : `${diff > 0 ? "Sobra" : "Falta"} ${currency(Math.abs(diff))}.`}
             </p>
           )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            Cancelar
           </Button>
           <Button
             disabled={counted === "" || Number(counted) < 0}
             onClick={() => onConfirm(Number(counted))}
           >
-            Close register
+            Cerrar caja
           </Button>
         </DialogFooter>
       </DialogContent>
