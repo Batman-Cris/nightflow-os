@@ -18,42 +18,52 @@ import { Progress } from "@/components/ui/progress";
 import { useStock } from "@/contexts/stock-context";
 import { useTickets } from "@/contexts/tickets-context";
 import { dayKey, hourlySales, isToday, recentDays } from "@/lib/dashboard-metrics";
-// `events` is still demo data — events aren't migrated to the database yet.
+// `events` sigue siendo data de ejemplo — Eventos todavía no está migrado a la base.
 import { currency, events } from "@/data/demo";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Dashboard — NOX OS" },
+      { title: "Inicio — NOX OS" },
       {
         name: "description",
         content:
-          "Live revenue, attendance, ticket sales and stock alerts for your venue, in one executive dashboard.",
+          "Ingresos, asistencia, venta de entradas y alertas de stock en vivo, en un solo panel ejecutivo.",
       },
-      { property: "og:title", content: "Dashboard — NOX OS" },
+      { property: "og:title", content: "Inicio — NOX OS" },
       {
         property: "og:description",
-        content: "Live revenue, attendance and ticket sales for your nightlife venue.",
+        content: "Ingresos, asistencia y venta de entradas en vivo para tu local.",
       },
     ],
   }),
   component: Dashboard,
 });
 
+const EVENT_STATUS_LABELS: Record<string, string> = {
+  live: "en vivo",
+  scheduled: "programado",
+  "sold-out": "agotado",
+  draft: "borrador",
+  finished: "finalizado",
+};
+
 function Dashboard() {
   const { products, sales, movements } = useStock();
   const { tickets } = useTickets();
 
-  const upcoming = events.filter((e) => e.status === "scheduled" || e.status === "sold-out").slice(0, 4);
+  const upcoming = events
+    .filter((e) => e.status === "scheduled" || e.status === "sold-out")
+    .slice(0, 4);
   const critical = products.filter((p) => p.minStock > 0 && p.stock < p.minStock);
 
-  // 1. Revenue today — sales rows created today.
+  // 1. Ingresos de hoy — ventas registradas hoy.
   const todaySales = sales.filter((s) => isToday(s.createdAt));
   const revenueToday = todaySales.reduce((sum, s) => sum + s.total, 0);
 
-  // 8. Estimated profit — revenue minus the cost of goods implied by Sale/Recipe
-  // stock movements valued at each product's `cost`. Movements are matched to
-  // products by name, so this is an estimate, not accounting-grade COGS.
+  // 8. Ganancia estimada — ingresos menos el costo implícito en los movimientos de
+  // stock tipo Venta/Receta, valuados al costo de cada producto. Es una estimación,
+  // no un costo de mercadería exacto de contabilidad.
   const costByName = new Map(products.map((p) => [p.name, p.cost]));
   const estimatedCost = movements
     .filter((m) => m.type === "Sale" || m.type === "Recipe")
@@ -62,11 +72,11 @@ function Dashboard() {
   const estimatedProfit = grossRevenue - estimatedCost;
   const margin = grossRevenue > 0 ? (estimatedProfit / grossRevenue) * 100 : 0;
 
-  // 2. People inside — this counts tickets checked in at the door. There is no
-  // exit scan yet, so it is a check-in total rather than a live in/out count.
+  // 2. Gente adentro — cuenta entradas con ingreso registrado en la puerta. Todavía
+  // no hay escaneo de salida, así que es un total de ingresos, no ocupación en vivo exacta.
   const checkedIn = tickets.filter((t) => t.status === "checked-in").length;
 
-  // 3. Tickets sold — every ticket issued, with sell-through against the total.
+  // 3. Entradas vendidas — todas las emitidas, con el % de venta sobre el total.
   const ticketsSold = tickets.filter((t) => t.status !== "refunded").length;
   const sellThrough = tickets.length > 0 ? (ticketsSold / tickets.length) * 100 : 0;
   const ticketRevenue = tickets
@@ -75,10 +85,10 @@ function Dashboard() {
   const averageTicket = ticketsSold > 0 ? ticketRevenue / ticketsSold : 0;
   const barSpendPerGuest = checkedIn > 0 ? grossRevenue / checkedIn : 0;
 
-  // 5. Sales per hour — real hourly buckets from the sales table.
+  // 5. Ventas por hora — agrupadas de verdad desde la tabla de ventas.
   const hourly = hourlySales(sales);
 
-  // 6. Recent activity — merged stock movements, sales and ticket check-ins.
+  // 6. Actividad reciente — movimientos de stock, ventas y check-ins de entrada, mezclados.
   const feed = [
     ...movements.map((m) => ({
       id: `m_${m.id}`,
@@ -86,17 +96,17 @@ function Dashboard() {
       time: m.time,
       text:
         m.type === "Restock"
-          ? `Restocked ${m.qty} × ${m.item} (${m.user})`
+          ? `Reposición de ${m.qty} × ${m.item} (${m.user})`
           : m.type === "Breakage"
-            ? `Breakage logged: ${Math.abs(m.qty)} × ${m.item}`
-            : `${Math.abs(m.qty)} × ${m.item} consumed (${m.type})`,
+            ? `Rotura registrada: ${Math.abs(m.qty)} × ${m.item}`
+            : `${Math.abs(m.qty)} × ${m.item} consumido (${m.type === "Recipe" ? "receta" : "venta"})`,
       tone: m.type === "Restock" ? "success" : m.type === "Breakage" ? "danger" : "muted",
     })),
     ...sales.map((s) => ({
       id: `s_${s.id}`,
       at: s.createdAt ?? "",
       time: s.time,
-      text: `${s.channel} sale · ${s.items} items · ${currency(s.total)} (${s.method}, ${s.cashier})`,
+      text: `Venta ${s.channel} · ${s.items} productos · ${currency(s.total)} (${s.method}, ${s.cashier})`,
       tone: "success",
     })),
     ...tickets
@@ -105,22 +115,22 @@ function Dashboard() {
         id: `t_${t.id}`,
         at: t.checkedInAt ?? "",
         time: (t.checkedInAt ?? "").slice(0, 5),
-        text: `${t.holder} checked in · ${t.tier}`,
+        text: `${t.holder} ingresó · ${t.tier}`,
         tone: "primary",
       })),
   ]
     .sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0))
     .slice(0, 8);
 
-  // 7. Popular products — units sold, straight from products.sold.
+  // 7. Productos populares — unidades vendidas, directo de products.sold.
   const popular = [...products]
     .filter((p) => p.sold > 0)
     .sort((a, b) => b.sold - a.sold)
     .slice(0, 6)
     .map((p) => ({ name: p.name, value: p.sold }));
 
-  // 9. Daily aggregates over the last 7 days. With one night of seed data this
-  // will legitimately show a single populated day.
+  // 9. Agregados diarios de los últimos 7 días. Con una sola noche de datos semilla,
+  // esto legítimamente va a mostrar un solo día con datos.
   const days = recentDays(7);
   const revenueTrend = days.map((d) => {
     const daySales = sales.filter((s) => s.createdAt && dayKey(s.createdAt) === d.key);
@@ -135,64 +145,79 @@ function Dashboard() {
 
   return (
     <AppShell
-      title="Tonight at NOX"
-      description="Live operation · Neon Cathedral · doors open 23:30"
+      title="Esta noche en NOX"
+      description="Operación en vivo · Neon Cathedral · apertura de puertas 23:30"
       actions={
         <>
           <Button variant="outline" size="sm">
-            Export night report
+            Exportar reporte de la noche
           </Button>
           <Button size="sm" asChild>
-            <Link to="/pos">Open POS</Link>
+            <Link to="/pos">Ir a la barra</Link>
           </Button>
         </>
       }
     >
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          label="Revenue today"
+          label="Ingresos de hoy"
           value={currency(revenueToday)}
           icon={DollarSign}
-          hint={`${todaySales.length} transactions today`}
+          hint={`${todaySales.length} transacciones hoy`}
         />
         <StatCard
-          label="Estimated profit"
+          label="Ganancia estimada"
           value={currency(estimatedProfit)}
           icon={TrendingUp}
-          hint={`${margin.toFixed(1)}% estimated margin`}
+          hint={`${margin.toFixed(1)}% de margen estimado`}
         />
         <StatCard
-          label="People inside"
+          label="Gente adentro"
           value={String(checkedIn)}
           icon={Users}
-          hint="tickets checked in (no exit scan)"
+          hint="entradas con ingreso (sin escaneo de salida)"
         />
         <StatCard
-          label="Tickets sold"
+          label="Entradas vendidas"
           value={String(ticketsSold)}
           icon={TicketIcon}
-          hint={`${sellThrough.toFixed(0)}% sell-through`}
+          hint={`${sellThrough.toFixed(0)}% de venta`}
         />
       </div>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Average ticket" value={currency(averageTicket)} icon={Receipt} hint="per guest spend" />
         <StatCard
-          label="Bar spend / guest"
+          label="Entrada promedio"
+          value={currency(averageTicket)}
+          icon={Receipt}
+          hint="gasto por invitado"
+        />
+        <StatCard
+          label="Consumo en barra / invitado"
           value={currency(barSpendPerGuest)}
           icon={DollarSign}
-          hint="sales per checked-in guest"
+          hint="ventas por invitado que ingresó"
         />
-        <StatCard label="Critical stock" value={String(critical.length)} icon={AlertTriangle} hint="items below minimum" />
-        <StatCard label="Upcoming events" value={String(upcoming.length)} icon={CalendarDays} hint="next 14 days" />
+        <StatCard
+          label="Stock crítico"
+          value={String(critical.length)}
+          icon={AlertTriangle}
+          hint="productos bajo el mínimo"
+        />
+        <StatCard
+          label="Próximos eventos"
+          value={String(upcoming.length)}
+          icon={CalendarDays}
+          hint="próximos 14 días"
+        />
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <Panel
-          title="Sales per hour"
-          subtitle="Bar + door revenue, live"
+          title="Ventas por hora"
+          subtitle="Ingresos de barra + puerta, en vivo"
           className="lg:col-span-2"
-          actions={<Pill tone="primary">Live</Pill>}
+          actions={<Pill tone="primary">En vivo</Pill>}
         >
           <AreaTrend
             data={hourly}
@@ -202,7 +227,7 @@ function Dashboard() {
           />
         </Panel>
 
-        <Panel title="Recent activity" subtitle="Live feed">
+        <Panel title="Actividad reciente" subtitle="Feed en vivo">
           <ul className="space-y-4">
             {feed.map((a) => (
               <li key={a.id} className="flex gap-3">
@@ -224,14 +249,16 @@ function Dashboard() {
               </li>
             ))}
             {feed.length === 0 ? (
-              <li className="text-sm text-muted-foreground">No activity yet tonight.</li>
+              <li className="text-sm text-muted-foreground">
+                Todavía no hay actividad esta noche.
+              </li>
             ) : null}
           </ul>
         </Panel>
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
-        <Panel title="Revenue & profit" subtitle="Last 7 days" className="lg:col-span-2">
+        <Panel title="Ingresos y ganancia" subtitle="Últimos 7 días" className="lg:col-span-2">
           <AreaTrend
             data={revenueTrend}
             xKey="day"
@@ -241,23 +268,23 @@ function Dashboard() {
             ]}
           />
         </Panel>
-        <Panel title="Popular products" subtitle="Units sold tonight">
+        <Panel title="Productos populares" subtitle="Unidades vendidas esta noche">
           <BarTrend data={popular} xKey="name" dataKey="value" horizontal />
         </Panel>
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
-        <Panel title="Attendance" subtitle="Tickets purchased per day" className="lg:col-span-2">
+        <Panel title="Asistencia" subtitle="Entradas compradas por día" className="lg:col-span-2">
           <BarTrend data={attendanceTrend} xKey="day" dataKey="guests" />
         </Panel>
 
         <Panel
-          title="Upcoming events"
-          subtitle="Next on the calendar"
+          title="Próximos eventos"
+          subtitle="Lo que sigue en el calendario"
           actions={
             <Button variant="ghost" size="sm" asChild>
               <Link to="/events">
-                All <ArrowRight className="ml-1 size-3.5" />
+                Ver todos <ArrowRight className="ml-1 size-3.5" />
               </Link>
             </Button>
           }
@@ -267,14 +294,17 @@ function Dashboard() {
               <li key={e.id} className="rounded-xl border border-border p-3 row-hover">
                 <div className="flex items-center justify-between gap-2">
                   <p className="truncate text-sm font-semibold">{e.name}</p>
-                  <Pill tone={e.status === "sold-out" ? "success" : "primary"}>{e.status}</Pill>
+                  <Pill tone={e.status === "sold-out" ? "success" : "primary"}>
+                    {EVENT_STATUS_LABELS[e.status] ?? e.status}
+                  </Pill>
                 </div>
                 <p className="mt-0.5 text-[11px] text-muted-foreground">
-                  {e.artist} · {new Date(e.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                  {e.artist} ·{" "}
+                  {new Date(e.date).toLocaleDateString("es-AR", { month: "short", day: "numeric" })}
                 </p>
                 <Progress value={(e.ticketsSold / e.capacity) * 100} className="mt-3 h-1.5" />
                 <p className="mt-1.5 text-[11px] text-muted-foreground">
-                  {e.ticketsSold} / {e.capacity} tickets · {currency(e.revenue)}
+                  {e.ticketsSold} / {e.capacity} entradas · {currency(e.revenue)}
                 </p>
               </li>
             ))}
