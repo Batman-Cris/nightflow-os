@@ -38,7 +38,8 @@ import {
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { notifications, venue } from "@/data/demo";
 import { useAuth } from "@/contexts/auth-context";
-import { canAccess, DEFAULT_ROUTE, isFullScreenRole } from "@/lib/permissions";
+import { useTickets } from "@/contexts/tickets-context";
+import { canAccess, DEFAULT_ROUTE, isFullScreenRole, ROLE_LABELS } from "@/lib/permissions";
 
 function Brand({ collapsed }: { collapsed?: boolean }) {
   return (
@@ -138,8 +139,8 @@ function NotificationCenter() {
       </PopoverTrigger>
       <PopoverContent align="end" className="w-88 p-0">
         <div className="flex items-center justify-between px-4 py-3">
-          <p className="text-sm font-semibold">Notifications</p>
-          <Badge variant="secondary">{unread} new</Badge>
+          <p className="text-sm font-semibold">Notificaciones</p>
+          <Badge variant="secondary">{unread} nuevas</Badge>
         </div>
         <Separator />
         <div className="max-h-80 overflow-y-auto">
@@ -183,6 +184,8 @@ export function AppShell({
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user, loading, signOut } = useAuth();
+  const { tickets } = useTickets();
+  const insideCount = tickets.filter((t) => t.status === "checked-in").length;
 
   useEffect(() => {
     if (!loading && !user) {
@@ -210,7 +213,7 @@ export function AppShell({
   if (loading || !user || !canAccess(user.role, pathname)) {
     return (
       <div className="grid min-h-screen place-items-center bg-background">
-        <p className="text-sm text-muted-foreground">Loading your workspace…</p>
+        <p className="text-sm text-muted-foreground">Cargando tu espacio de trabajo…</p>
       </div>
     );
   }
@@ -255,7 +258,7 @@ export function AppShell({
             onClick={() => setCollapsed((c) => !c)}
           >
             {collapsed ? <ChevronsRight className="size-4" /> : <ChevronsLeft className="size-4" />}
-            {!collapsed && <span className="ml-2 text-xs">Collapse</span>}
+            {!collapsed && <span className="ml-2 text-xs">Contraer</span>}
           </Button>
         </div>
       </aside>
@@ -280,7 +283,7 @@ export function AppShell({
             className="group flex h-9 flex-1 max-w-md items-center gap-2 rounded-xl border border-border bg-card/60 px-3 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
           >
             <Search className="size-4" />
-            <span className="truncate">Search events, tickets, customers…</span>
+            <span className="truncate">Buscar eventos, entradas, clientes…</span>
             <kbd className="ml-auto hidden items-center gap-0.5 rounded-md border border-border px-1.5 py-0.5 text-[10px] sm:flex">
               <CommandIcon className="size-3" />K
             </kbd>
@@ -289,7 +292,7 @@ export function AppShell({
           <div className="ml-auto flex items-center gap-1">
             <span className="mr-2 hidden items-center gap-2 rounded-full border border-success/30 bg-success/10 px-3 py-1 text-xs font-medium text-success lg:flex">
               <span className="size-1.5 animate-pulse rounded-full bg-success" />
-              Live · 1,147 inside
+              En vivo · {insideCount} dentro
             </span>
             <NotificationCenter />
             <DropdownMenu>
@@ -300,10 +303,10 @@ export function AppShell({
                   </span>
                   <span className="hidden text-left sm:block">
                     <span className="block text-xs font-medium leading-tight">
-                      {user?.name ?? "Guest"}
+                      {user?.name ?? "Invitado"}
                     </span>
-                    <span className="block text-[10px] capitalize text-muted-foreground">
-                      {user?.role ?? "viewer"}
+                    <span className="block text-[10px] text-muted-foreground">
+                      {user ? ROLE_LABELS[user.role] : "visitante"}
                     </span>
                   </span>
                 </button>
@@ -314,7 +317,7 @@ export function AppShell({
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => navigate({ to: "/settings" })}>
-                  <User className="mr-2 size-4" /> Profile & settings
+                  <User className="mr-2 size-4" /> Perfil y configuración
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
@@ -322,7 +325,7 @@ export function AppShell({
                     navigate({ to: "/login" });
                   }}
                 >
-                  <LogOut className="mr-2 size-4" /> Sign out
+                  <LogOut className="mr-2 size-4" /> Cerrar sesión
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -346,10 +349,10 @@ export function AppShell({
       </div>
 
       <CommandDialog open={paletteOpen} onOpenChange={setPaletteOpen}>
-        <CommandInput placeholder="Jump to a section or run a command…" />
+        <CommandInput placeholder="Ir a una sección o ejecutar un comando…" />
         <CommandList>
-          <CommandEmpty>No results found.</CommandEmpty>
-          <CommandGroup heading="Navigation">
+          <CommandEmpty>No se encontraron resultados.</CommandEmpty>
+          <CommandGroup heading="Navegación">
             {navItems.map((item) => (
               <CommandItem
                 key={item.to}
